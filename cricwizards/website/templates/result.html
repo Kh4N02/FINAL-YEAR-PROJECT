@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CricWizards XI - Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Predicted Best XI</h1>
+    <div class="results">
+        {% for player in team %}
+        <div class="player-card">
+            <h3>{{ player.name }}</h3>
+            <p>Role: {{ player.role }}</p>
+            <p>Score: {{ "%.2f"|format(player.score) }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('home') }}" class="back-button">Back to Home</a>
+</body>
+</html> 

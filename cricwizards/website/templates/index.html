@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CricWizards XI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>CricWizards XI</h1>
+    <form action="{{ url_for('predict') }}" method="post">
+        <input type="text" name="team_id" placeholder="Enter Team ID">
+        <button type="submit">Predict Best XI</button>
+    </form>
+</body>
+</html> 

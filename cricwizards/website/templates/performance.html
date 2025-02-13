@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="performance-analysis">
+    <h1 class="mb-4">Performance Analysis</h1>
+    
+    <!-- All-Rounder Analysis -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h2 class="h5 mb-0">All-Round Performances</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Matches</th>
+                            <th>Runs</th>
+                            <th>Bat Avg</th>
+                            <th>SR</th>
+                            <th>Wickets</th>
+                            <th>Economy</th>
+                            <th>Bowl Avg</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in allrounder_stats %}
+                        <tr>
+                            <td>{{ stat.name }}</td>
+                            <td>{{ stat.matches }}</td>
+                            <td>{{ stat.runs }}</td>
+                            <td>{{ "%.2f"|format(stat.batting_average) }}</td>
+                            <td>{{ "%.2f"|format(stat.strike_rate) }}</td>
+                            <td>{{ stat.wickets }}</td>
+                            <td>{{ "%.2f"|format(stat.economy) }}</td>
+                            <td>{{ "%.2f"|format(stat.bowling_average) }}</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: {{ (stat.all_round_rating/200)*100 }}%">
+                                        {{ "%.1f"|format(stat.all_round_rating) }}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batting Analysis -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Batting Performances</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Matches</th>
+                            <th>Runs</th>
+                            <th>Average</th>
+                            <th>Strike Rate</th>
+                            <th>Highest Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in batting_stats %}
+                        <tr>
+                            <td>{{ stat.name }}</td>
+                            <td>{{ stat.matches }}</td>
+                            <td>{{ stat.runs }}</td>
+                            <td>{{ "%.2f"|format(stat.average) }}</td>
+                            <td>{{ "%.2f"|format(stat.strike_rate) }}</td>
+                            <td>{{ stat.highest }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bowling Analysis -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h2 class="h5 mb-0">Bowling Performances</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Matches</th>
+                            <th>Wickets</th>
+                            <th>Economy</th>
+                            <th>Best Figures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in bowling_stats %}
+                        <tr>
+                            <td>{{ stat.name }}</td>
+                            <td>{{ stat.matches }}</td>
+                            <td>{{ stat.wickets }}</td>
+                            <td>{{ "%.2f"|format(stat.economy) }}</td>
+                            <td>{{ stat.best }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add a visual comparison section -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h2 class="h5 mb-0">Performance Comparison</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for stat in allrounder_stats[:3] %}
+            <div class="col-md-4">
+                <div class="player-comparison-card">
+                    <h3>{{ stat.name }}</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="label">Batting</span>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" 
+                                     style="width: {{ (stat.batting_average/50)*100 }}%">
+                                    {{ "%.1f"|format(stat.batting_average) }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Bowling</span>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ (stat.wickets/10)*100 }}%">
+                                    {{ stat.wickets }} wkts
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
