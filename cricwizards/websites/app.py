@@ -13,7 +13,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from src.get_pakistan_t20 import (
+from src.get_team_performances import (
     get_recent_t20i_performances,
     predict_best_xi,
     get_team_name,
@@ -491,13 +491,19 @@ def player_profile(player_id):
     try:
         print(f"Fetching data for player ID: {player_id}")
         
-        # Get player data from API
+        # Get player data from API - simplified to match working Postman request
         player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player_id}"
         params = {
             "api_token": API_TOKEN
         }
         
+        print(f"Making request to: {player_url}")
+        print(f"With params: {params}")
+        
         response = requests.get(player_url, params=params)
+        print(f"Response status: {response.status_code}")
+        print(f"Response content: {response.text[:500]}")  # Print first 500 chars of response
+        
         if response.status_code != 200:
             return render_template('error.html', message=f"Could not fetch player data. Status code: {response.status_code}")
             
@@ -516,9 +522,6 @@ def player_profile(player_id):
             
         player_performance = next((p for p in performances.values() if p['id'] == player_id), None)
         
-        # Get individual match performances
-        match_performances = get_player_match_performances(player_id, int(team_id))
-        
         # Initialize career stats with zeros
         career_stats = {
             'batting': {
@@ -533,7 +536,7 @@ def player_profile(player_id):
                 'matches': 0,
                 'innings': 0,
                 'wickets': 0,
-                'average': '∞',
+                'average': '∞',  # Changed to string '∞'
                 'economy': 0,
                 'best': '0/0'
             }
@@ -564,8 +567,7 @@ def player_profile(player_id):
         return render_template('player_profile.html',
                              player=player_data,
                              career_stats=career_stats,
-                             recent_performance=player_performance,
-                             match_performances=match_performances)
+                             recent_performance=player_performance)
                              
     except Exception as e:
         print(f"Error in player profile: {str(e)}")

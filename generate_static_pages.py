@@ -1,9 +1,10 @@
 import os
-from src.get_pakistan_t20 import (
-    get_recent_t20i_performances, 
-    calculate_player_rating,
+from src.get_team_performances import (
+    get_recent_t20i_performances,
     predict_best_xi,
-    save_performances
+    get_team_name,
+    calculate_player_rating,
+    API_TOKEN
 )
 
 def generate_performance_html():

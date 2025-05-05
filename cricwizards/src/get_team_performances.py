@@ -467,69 +467,6 @@ def predict_best_xi(performances):
         'bench_strength': bench_strength
     }
 
-def get_player_match_performances(player_id, team_id):
-    """Get detailed performances of a player in their last 5 matches"""
-    fixtures_url = "https://cricket.sportmonks.com/api/v2.0/fixtures"
-    fixtures_params = {
-        "api_token": API_TOKEN,
-        "filter[type]": "T20I",
-        "filter[status]": "Finished",
-        "$or[localteam_id]": team_id,
-        "$or[visitorteam_id]": team_id,
-        "include": "localteam,visitorteam,batting.batsman,bowling.bowler",
-        "sort": "-starting_at",
-        "per_page": 5
-    }
-    
-    response = make_request(fixtures_url, fixtures_params)
-    if not response or response.status_code != 200:
-        return []
-    
-    matches = response.json().get('data', [])
-    player_matches = []
-    
-    for match in matches:
-        match_date = match.get('starting_at')
-        local_team = match.get('localteam', {}).get('name')
-        visitor_team = match.get('visitorteam', {}).get('name')
-        
-        # Get batting performance
-        batting_perf = None
-        for innings in match.get('batting', []):
-            batsman = innings.get('batsman', {})
-            if batsman.get('id') == player_id:
-                batting_perf = {
-                    'runs': innings.get('score', 0),
-                    'balls': innings.get('ball', 0),
-                    'fours': innings.get('four_x', 0),
-                    'sixes': innings.get('six_x', 0),
-                    'out': innings.get('out', False)
-                }
-                break
-        
-        # Get bowling performance
-        bowling_perf = None
-        for spell in match.get('bowling', []):
-            bowler = spell.get('bowler', {})
-            if bowler.get('id') == player_id:
-                bowling_perf = {
-                    'overs': spell.get('overs', 0),
-                    'wickets': spell.get('wickets', 0),
-                    'runs': spell.get('runs', 0),
-                    'maidens': spell.get('maidens', 0)
-                }
-                break
-        
-        if batting_perf or bowling_perf:
-            player_matches.append({
-                'date': match_date,
-                'teams': f"{local_team} vs {visitor_team}",
-                'batting': batting_perf,
-                'bowling': bowling_perf
-            })
-    
-    return player_matches
-
 if __name__ == "__main__":
     print("Starting Pakistan T20I performance analysis...")
     performances = get_recent_t20i_performances()
