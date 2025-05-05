@@ -23,20 +23,18 @@ def home():
 def predict():
     if request.method == 'POST':
         team_id = request.form.get('team_id')
-    try:
-        performances = get_recent_t20i_performances()
-        if performances:
-            best_xi = predict_best_xi(performances)
-            
-            # Get performance trends
-            trends = analyze_performance_trends(performances)
-            
-            return render_template('predict.html', 
-                                 team=best_xi, 
-                                 trends=trends)
-        return render_template('error.html', message="No data available")
-    except Exception as e:
-        return render_template('error.html', message=str(e))
+        try:
+            performances = get_recent_t20i_performances(team_id=team_id)
+            if performances:
+                best_xi = predict_best_xi(performances)
+                trends = analyze_performance_trends(performances)
+                return render_template('predict.html', 
+                                     team=best_xi, 
+                                     trends=trends)
+            return render_template('error.html', message="No data available")
+        except Exception as e:
+            return render_template('error.html', message=str(e))
+    return render_template('index.html')
 
 @app.route('/performance')
 def performance():
