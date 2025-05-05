@@ -62,11 +62,11 @@ def predict():
         
         # Predict best XI
         best_xi = predict_best_xi(performances)
-        
+            
         # Calculate team stats
         team_stats = calculate_team_stats(performances)
-        
-        return render_template('predict.html',
+            
+        return render_template('predict.html', 
                              team_name=team_name,
                              best_xi=best_xi,
                              team_stats=team_stats)
@@ -90,22 +90,22 @@ def performance():
             return render_template('error.html', 
                                  message=f"No recent performance data available for this team. Please try another team.")
         
-        # Convert performances to DataFrame for analysis
-        df = pd.DataFrame(performances.values())
-        
-        # Calculate performance metrics
-        batting_stats = calculate_batting_stats(df)
-        bowling_stats = calculate_bowling_stats(df)
-        allrounder_stats = calculate_allrounder_stats(df)
-        
+            # Convert performances to DataFrame for analysis
+            df = pd.DataFrame(performances.values())
+            
+            # Calculate performance metrics
+            batting_stats = calculate_batting_stats(df)
+            bowling_stats = calculate_bowling_stats(df)
+            allrounder_stats = calculate_allrounder_stats(df)
+            
         team_name = get_team_name(int(team_id))
         if not team_name:
             return render_template('error.html', 
                                  message=f"Could not find team information for ID: {team_id}")
         
-        return render_template('performance.html',
-                             batting_stats=batting_stats,
-                             bowling_stats=bowling_stats,
+            return render_template('performance.html',
+                                 batting_stats=batting_stats,
+                                 bowling_stats=bowling_stats,
                              allrounder_stats=allrounder_stats,
                              team_name=team_name)
                              

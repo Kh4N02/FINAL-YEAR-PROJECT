@@ -457,37 +457,54 @@ def predict_best_xi(performances):
     )
     
     best_xi = []
+    selected_players = set()  # Keep track of selected players
     
     # 1. Select wicketkeeper (mandatory)
     if wicketkeepers:
         best_xi.append(('wicketkeeper', wicketkeepers[0]))
+        selected_players.add(wicketkeepers[0]['name'])
     elif batsmen:  # If no specialist keeper, use a batsman
         best_xi.append(('wicketkeeper', batsmen[0]))
+        selected_players.add(batsmen[0]['name'])
         batsmen = batsmen[1:]
     
     # 2. Select top order batsmen (3-4)
     for i in range(min(4, len(batsmen))):
         best_xi.append(('batsman', batsmen[i]))
+        selected_players.add(batsmen[i]['name'])
     
     # 3. Select all-rounders (2-3)
     for i in range(min(3, len(allrounders))):
         best_xi.append(('allrounder', allrounders[i]))
+        selected_players.add(allrounders[i]['name'])
     
     # 4. Select bowlers (remaining spots, minimum 4)
     remaining_spots = 11 - len(best_xi)
     for i in range(min(remaining_spots, len(bowlers))):
         best_xi.append(('bowler', bowlers[i]))
+        selected_players.add(bowlers[i]['name'])
     
     # If we still need players, add more batsmen or all-rounders
     while len(best_xi) < 11:
         if len(batsmen) > 4:
             best_xi.append(('batsman', batsmen[4]))
+            selected_players.add(batsmen[4]['name'])
             batsmen = batsmen[5:]
         elif len(allrounders) > 3:
             best_xi.append(('allrounder', allrounders[3]))
+            selected_players.add(allrounders[3]['name'])
             allrounders = allrounders[4:]
         else:
             break
+    
+    # After selecting best XI, create bench strength
+    bench_strength = []
+    for player in rated_players:
+        if player['name'] not in selected_players:
+            bench_strength.append(player)
+    
+    # Sort bench strength by overall rating
+    bench_strength.sort(key=lambda x: x['overall_rating'], reverse=True)
     
     # Organize for display
     return {
@@ -495,7 +512,8 @@ def predict_best_xi(performances):
         'batsmen': [p[1] for p in best_xi if p[0] == 'batsman'],
         'allrounders': [p[1] for p in best_xi if p[0] == 'allrounder'],
         'bowlers': [p[1] for p in best_xi if p[0] == 'bowler'],
-        'total_rating': sum(p[1]['overall_rating'] for p in best_xi) / len(best_xi) if best_xi else 0
+        'total_rating': sum(p[1]['overall_rating'] for p in best_xi) / len(best_xi) if best_xi else 0,
+        'bench_strength': bench_strength  # Add bench strength to return value
     }
 
 if __name__ == "__main__":

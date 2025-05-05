@@ -99,6 +99,49 @@
             </div>
         </div>
         
+        <!-- Add this after the Team Stats Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h2 class="h5 mb-0">Bench Strength</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for player in best_xi.bench_strength %}
+                    <div class="col-md-4 mb-3">
+                        <div class="player-card">
+                            <h3>{{ player.name }}</h3>
+                            <p class="text-muted">{{ player.role }}</p>
+                            <div class="stats-grid">
+                                {% if player.batting_rating > 0 %}
+                                <div class="stat-item">
+                                    <span class="label">Batting</span>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" 
+                                             style="width: {{ (player.batting_rating/100)*100 }}%">
+                                            {{ "%.1f"|format(player.batting_rating) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if player.bowling_rating > 0 %}
+                                <div class="stat-item">
+                                    <span class="label">Bowling</span>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: {{ (player.bowling_rating/100)*100 }}%">
+                                            {{ "%.1f"|format(player.bowling_rating) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
         <div class="team-rating mt-4">
             <h2>Team Rating: {{ "%.1f"|format(best_xi.total_rating) }}</h2>
         </div>
