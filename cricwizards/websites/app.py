@@ -1,8 +1,11 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session, flash
 import sys
 import os
 from datetime import datetime, timedelta
 import pandas as pd
+from flask_sqlalchemy import SQLAlchemy
+from models import db, User
+from functools import wraps
 
 # Add the parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +20,26 @@ from src.get_pakistan_t20 import (
 )
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Change this to a secure secret key
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cricwizards.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database
+db.init_app(app)
+
+# Create database tables
+with app.app_context():
+    db.create_all()
+
+# Authentication decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Define teams data
 TEAMS = [
@@ -36,14 +59,97 @@ TEAMS = [
 
 @app.route('/')
 def home():
+    # Clear the team_id from session when returning to home
+    session.pop('team_id', None)
     return render_template('index.html', teams=TEAMS)
 
-@app.route('/predict', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validate input
+        if not User.validate_username(username):
+            flash('Username must be 3-20 characters and contain only letters, numbers, and underscores.', 'danger')
+            return render_template('register.html')
+            
+        if not User.validate_password(password):
+            flash('Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.', 'danger')
+            return render_template('register.html')
+            
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('register.html')
+            
+        # Check if username or email already exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists.', 'danger')
+            return render_template('register.html')
+            
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered.', 'danger')
+            return render_template('register.html')
+            
+        # Create new user
+        user = User(username=username, email=email)
+        user.set_password(password)
+        
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'danger')
+            return render_template('register.html')
+            
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            flash('Welcome back!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid username or password.', 'danger')
+            return render_template('login.html')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('home'))
+
+@app.route('/predict', methods=['GET', 'POST'])
+@login_required
 def predict():
     try:
-        team_id = request.form.get('team_id')
+        # Get team_id from either POST data, URL parameters, or session
+        team_id = None
+        if request.method == 'POST':
+            team_id = request.form.get('team_id')
+        else:
+            team_id = request.args.get('team_id') or session.get('team_id')
+        
         if not team_id:
-            return render_template('error.html', message="No team selected")
+            return redirect(url_for('home'))
+        
+        # Store team_id in session
+        session['team_id'] = team_id
         
         print(f"Fetching data for team ID: {team_id}")
         
@@ -77,10 +183,17 @@ def predict():
                              message=f"An error occurred while processing the team data: {str(e)}")
 
 @app.route('/performance')
+@login_required
 def performance():
+    # First try to get team_id from URL
     team_id = request.args.get('team_id')
+    
+    # If not in URL, try to get from session
     if not team_id:
-        return render_template('error.html', message="No team selected")
+        team_id = session.get('team_id')
+    
+    if not team_id:
+        return redirect(url_for('home'))
         
     try:
         print(f"Fetching performance data for team ID: {team_id}")
@@ -90,22 +203,22 @@ def performance():
             return render_template('error.html', 
                                  message=f"No recent performance data available for this team. Please try another team.")
         
-            # Convert performances to DataFrame for analysis
-            df = pd.DataFrame(performances.values())
-            
-            # Calculate performance metrics
-            batting_stats = calculate_batting_stats(df)
-            bowling_stats = calculate_bowling_stats(df)
-            allrounder_stats = calculate_allrounder_stats(df)
-            
+        # Convert performances to DataFrame for analysis
+        df = pd.DataFrame(performances.values())
+        
+        # Calculate performance metrics
+        batting_stats = calculate_batting_stats(df)
+        bowling_stats = calculate_bowling_stats(df)
+        allrounder_stats = calculate_allrounder_stats(df)
+        
         team_name = get_team_name(int(team_id))
         if not team_name:
             return render_template('error.html', 
                                  message=f"Could not find team information for ID: {team_id}")
         
-            return render_template('performance.html',
-                                 batting_stats=batting_stats,
-                                 bowling_stats=bowling_stats,
+        return render_template('performance.html',
+                             batting_stats=batting_stats,
+                             bowling_stats=bowling_stats,
                              allrounder_stats=allrounder_stats,
                              team_name=team_name)
                              

@@ -6,138 +6,147 @@
     
     {% if best_xi %}
         <div class="team-section">
-            <!-- Wicketkeeper Section -->
+            <!-- Main XI Section -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="h5 mb-0">Wicketkeeper</h2>
+                    <h2 class="h5 mb-0">Predicted XI</h2>
                 </div>
                 <div class="card-body">
-                    {% for player in best_xi.wicketkeeper %}
+                    {% for player in best_xi.players %}
                     <div class="player-card">
-                        <h3>{{ player.name }}</h3>
-                        <p>Rating: {{ "%.1f"|format(player.batting_rating) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Batsmen Section -->
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h2 class="h5 mb-0">Batsmen</h2>
-                </div>
-                <div class="card-body">
-                    {% for player in best_xi.batsmen %}
-                    <div class="player-card">
-                        <h3>{{ player.name }}</h3>
-                        <p>Rating: {{ "%.1f"|format(player.batting_rating) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- All-rounders Section -->
-            <div class="card mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h2 class="h5 mb-0">All-rounders</h2>
-                </div>
-                <div class="card-body">
-                    {% for player in best_xi.allrounders %}
-                    <div class="player-card">
-                        <h3>{{ player.name }}</h3>
-                        <p>Batting: {{ "%.1f"|format(player.batting_rating) }}</p>
-                        <p>Bowling: {{ "%.1f"|format(player.bowling_rating) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Bowlers Section -->
-            <div class="card mb-4">
-                <div class="card-header bg-danger text-white">
-                    <h2 class="h5 mb-0">Bowlers</h2>
-                </div>
-                <div class="card-body">
-                    {% for player in best_xi.bowlers %}
-                    <div class="player-card">
-                        <h3>{{ player.name }}</h3>
-                        <p>Rating: {{ "%.1f"|format(player.bowling_rating) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Team Stats Section -->
-        <div class="card mt-4">
-            <div class="card-header bg-info text-white">
-                <h2 class="h5 mb-0">Team Statistics</h2>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h3>Batting Stats</h3>
-                        <ul class="list-unstyled">
-                            <li>Total Players: {{ team_stats.total_players }}</li>
-                            <li>Total Runs: {{ team_stats.batting.total_runs }}</li>
-                            <li>Total Innings: {{ team_stats.batting.total_innings }}</li>
-                            <li>Batting Average: {{ "%.2f"|format(team_stats.batting.average) }}</li>
-                            <li>Strike Rate: {{ "%.2f"|format(team_stats.batting.strike_rate) }}</li>
-                            <li>Boundaries: {{ team_stats.batting.total_fours }} fours, {{ team_stats.batting.total_sixes }} sixes</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Bowling Stats</h3>
-                        <ul class="list-unstyled">
-                            <li>Total Wickets: {{ team_stats.bowling.total_wickets }}</li>
-                            <li>Total Overs: {{ team_stats.bowling.total_overs }}</li>
-                            <li>Economy Rate: {{ "%.2f"|format(team_stats.bowling.economy_rate) }}</li>
-                            <li>Bowling Average: {{ "%.2f"|format(team_stats.bowling.bowling_average) }}</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Add this after the Team Stats Section -->
-        <div class="card mt-4">
-            <div class="card-header bg-secondary text-white">
-                <h2 class="h5 mb-0">Bench Strength</h2>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for player in best_xi.bench_strength %}
-                    <div class="col-md-4 mb-3">
-                        <div class="player-card">
+                        <div class="player-header" data-bs-toggle="collapse" data-bs-target="#stats-{{ player.name|replace(' ', '-') }}" aria-expanded="false">
                             <h3>{{ player.name }}</h3>
-                            <p class="text-muted">{{ player.role }}</p>
-                            <div class="stats-grid">
+                            <div class="rating-summary">
                                 {% if player.batting_rating > 0 %}
-                                <div class="stat-item">
-                                    <span class="label">Batting</span>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-primary" 
-                                             style="width: {{ (player.batting_rating/100)*100 }}%">
-                                            {{ "%.1f"|format(player.batting_rating) }}
-                                        </div>
-                                    </div>
-                                </div>
+                                    <span class="badge bg-primary">Batting: {{ "%.1f"|format(player.batting_rating) }}</span>
                                 {% endif %}
                                 {% if player.bowling_rating > 0 %}
-                                <div class="stat-item">
-                                    <span class="label">Bowling</span>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-success" 
-                                             style="width: {{ (player.bowling_rating/100)*100 }}%">
-                                            {{ "%.1f"|format(player.bowling_rating) }}
+                                    <span class="badge bg-success">Bowling: {{ "%.1f"|format(player.bowling_rating) }}</span>
+                                {% endif %}
+                            </div>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        
+                        <div class="collapse" id="stats-{{ player.name|replace(' ', '-') }}">
+                            <div class="stats-grid">
+                                {% if player.batting_rating > 0 %}
+                                    <div class="stat-section">
+                                        <h4 class="stat-section-title">Batting</h4>
+                                        <div class="stat-item">
+                                            <span class="label">Runs</span>
+                                            <div class="stat-value">{{ player.batting.runs }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Balls Faced</span>
+                                            <div class="stat-value">{{ player.batting.balls }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Average</span>
+                                            <div class="stat-value">{{ "%.2f"|format(player.batting.runs / player.batting.innings) if player.batting.innings > 0 else 0 }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Strike Rate</span>
+                                            <div class="stat-value">{{ "%.2f"|format((player.batting.runs / player.batting.balls * 100) if player.batting.balls > 0 else 0) }}</div>
                                         </div>
                                     </div>
-                                </div>
+                                {% endif %}
+                                
+                                {% if player.bowling_rating > 0 %}
+                                    <div class="stat-section">
+                                        <h4 class="stat-section-title">Bowling</h4>
+                                        <div class="stat-item">
+                                            <span class="label">Wickets</span>
+                                            <div class="stat-value">{{ player.bowling.wickets }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Overs Bowled</span>
+                                            <div class="stat-value">{{ "%.1f"|format(player.bowling.overs) }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Average</span>
+                                            <div class="stat-value">{{ "%.2f"|format(player.bowling.runs / player.bowling.wickets) if player.bowling.wickets > 0 else 0 }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="label">Economy</span>
+                                            <div class="stat-value">{{ "%.2f"|format(player.bowling.runs / player.bowling.overs) if player.bowling.overs > 0 else 0 }}</div>
+                                        </div>
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Bench Strength Section -->
+            <div class="card mt-4">
+                <div class="card-header bg-secondary text-white">
+                    <h2 class="h5 mb-0">Bench Strength</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for player in best_xi.bench_strength %}
+                        <div class="col-md-4 mb-3">
+                            <div class="player-card">
+                                <div class="player-header" data-bs-toggle="collapse" data-bs-target="#bench-stats-{{ player.name|replace(' ', '-') }}" aria-expanded="false">
+                                    <h3>{{ player.name }}</h3>
+                                    <div class="rating-summary">
+                                        {% if player.batting_rating > 0 %}
+                                            <span class="badge bg-primary">Batting: {{ "%.1f"|format(player.batting_rating) }}</span>
+                                        {% endif %}
+                                        {% if player.bowling_rating > 0 %}
+                                            <span class="badge bg-success">Bowling: {{ "%.1f"|format(player.bowling_rating) }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                
+                                <div class="collapse" id="bench-stats-{{ player.name|replace(' ', '-') }}">
+                                    <div class="stats-grid">
+                                        {% if player.batting_rating > 0 %}
+                                            <div class="stat-item">
+                                                <span class="label">Runs</span>
+                                                <div class="stat-value">{{ player.batting.runs }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Balls Faced</span>
+                                                <div class="stat-value">{{ player.batting.balls }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Average</span>
+                                                <div class="stat-value">{{ "%.2f"|format(player.batting.runs / player.batting.innings) if player.batting.innings > 0 else 0 }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Strike Rate</span>
+                                                <div class="stat-value">{{ "%.2f"|format((player.batting.runs / player.batting.balls * 100) if player.batting.balls > 0 else 0) }}</div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if player.bowling_rating > 0 %}
+                                            <div class="stat-item">
+                                                <span class="label">Wickets</span>
+                                                <div class="stat-value">{{ player.bowling.wickets }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Overs Bowled</span>
+                                                <div class="stat-value">{{ "%.1f"|format(player.bowling.overs) }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Average</span>
+                                                <div class="stat-value">{{ "%.2f"|format(player.bowling.runs / player.bowling.wickets) if player.bowling.wickets > 0 else 0 }}</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="label">Economy</span>
+                                                <div class="stat-value">{{ "%.2f"|format(player.bowling.runs / player.bowling.overs) if player.bowling.overs > 0 else 0 }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

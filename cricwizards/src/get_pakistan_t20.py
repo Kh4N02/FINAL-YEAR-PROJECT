@@ -265,14 +265,16 @@ def get_recent_t20i_performances(team_id):
                             'balls': 0,
                             'fours': 0,
                             'sixes': 0,
-                            'highest': 0
+                            'highest': 0,
+                            'not_outs': 0
                         },
                         'bowling': {
                             'innings': 0,
                             'overs': 0,
                             'wickets': 0,
                             'runs': 0,
-                            'best': '0/0'
+                            'best': '0/0',
+                            'maidens': 0
                         }
                     }
                 
@@ -283,6 +285,7 @@ def get_recent_t20i_performances(team_id):
                 perf['batting']['balls'] += innings.get('ball', 0)
                 perf['batting']['fours'] += innings.get('four_x', 0)
                 perf['batting']['sixes'] += innings.get('six_x', 0)
+                perf['batting']['not_outs'] += 1 if innings.get('out', False) else 0
                 
                 score = innings.get('score', 0)
                 if score > perf['batting']['highest']:
@@ -306,14 +309,16 @@ def get_recent_t20i_performances(team_id):
                             'balls': 0,
                             'fours': 0,
                             'sixes': 0,
-                            'highest': 0
+                            'highest': 0,
+                            'not_outs': 0
                         },
                         'bowling': {
                             'innings': 0,
                             'overs': 0,
                             'wickets': 0,
                             'runs': 0,
-                            'best': '0/0'
+                            'best': '0/0',
+                            'maidens': 0
                         }
                     }
                 
@@ -322,6 +327,7 @@ def get_recent_t20i_performances(team_id):
                 perf['bowling']['overs'] += spell.get('overs', 0)
                 perf['bowling']['wickets'] += spell.get('wickets', 0)
                 perf['bowling']['runs'] += spell.get('runs', 0)
+                perf['bowling']['maidens'] += spell.get('maidens', 0)
                 
                 wickets = spell.get('wickets', 0)
                 runs = spell.get('runs', 0)
@@ -353,27 +359,50 @@ def save_performances(performances, filename=None):
         json.dump(data, f, indent=2)
     print(f"\nData saved to {filepath}")
 
+def get_player_position(player_id):
+    """Get player's position from the positions API"""
+    # First get all positions
+    positions_url = "https://cricket.sportmonks.com/api/v2.0/positions"
+    positions_params = {
+        "api_token": API_TOKEN
+    }
+    
+    response = make_request(positions_url, positions_params)
+    if response and response.status_code == 200:
+        positions_data = response.json()
+        if positions_data.get('data'):
+            # Create a mapping of position IDs to names
+            position_map = {pos['id']: pos['name'] for pos in positions_data['data']}
+            
+            # Now get player's position
+            player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player_id}"
+            player_params = {
+                "api_token": API_TOKEN,
+                "include": "career"
+            }
+            
+            player_response = make_request(player_url, player_params)
+            if player_response and player_response.status_code == 200:
+                player_data = player_response.json()
+                if player_data.get('data'):
+                    # Get position ID from player data
+                    position_id = player_data['data'].get('position_id')
+                    if position_id in position_map:
+                        position = position_map[position_id]
+                        
+                        # Special case for wicketkeeper-batsmen
+                        if position == "Batsman" and "wicketkeeper" in player_data['data'].get('fullname', '').lower():
+                            return "Wicketkeeper"
+                        return position
+    
+    return None
+
 def calculate_player_rating(player):
     """Calculate a player's rating based on recent performances"""
     batting_stats = player['batting']
     bowling_stats = player['bowling']
     
-    # Identify known players and their roles
-    KNOWN_PLAYERS = {
-        'Mohammad Rizwan': 'Wicketkeeper',
-        'Sarfaraz Ahmed': 'Wicketkeeper',
-        'Babar Azam': 'Batsman',
-        'Fakhar Zaman': 'Batsman',
-        'Shaheen Afridi': 'Bowler',
-        'Haris Rauf': 'Bowler',
-        'Shadab Khan': 'All-rounder',
-        'Iftikhar Ahmed': 'All-rounder',
-        'Mohammad Nawaz': 'All-rounder',
-        'Naseem Shah': 'Bowler',
-        'Mohammad Wasim Jr': 'Bowler' 
-    } 
-    
-    # Calculate ratings
+    # Calculate batting rating
     batting_rating = 0
     if batting_stats['innings'] > 0:
         avg = batting_stats['runs'] / batting_stats['innings']
@@ -386,6 +415,7 @@ def calculate_player_rating(player):
             boundary_percent * 0.2
         ))
     
+    # Calculate bowling rating
     bowling_rating = 0
     if bowling_stats['innings'] > 0:
         avg = bowling_stats['runs'] / bowling_stats['wickets'] if bowling_stats['wickets'] > 0 else 100
@@ -398,122 +428,42 @@ def calculate_player_rating(player):
             wickets_per_match * 20
         ))
     
-    # Determine role based on known players first, then stats
-    name = player['name']
-    if name in KNOWN_PLAYERS:
-        role = KNOWN_PLAYERS[name]
-    else:
-        # Determine role based on stats
-        if bowling_stats['innings'] > 0 and bowling_stats['wickets'] > 0:
-            if batting_stats['innings'] > 0 and batting_stats['runs'] / batting_stats['innings'] > 15:
-                role = "All-rounder"
-            else:
-                role = "Bowler"
-        else:
-            role = "Batsman"
-    
-    # Calculate overall rating based on role
-    if role == "Wicketkeeper":
-        overall_rating = batting_rating * 0.9 + bowling_rating * 0.1
-    elif role == "Batsman":
-        overall_rating = batting_rating
-    elif role == "Bowler":
-        overall_rating = bowling_rating
-    else:  # All-rounder
+    # Calculate overall rating
+    overall_rating = max(batting_rating, bowling_rating)
+    if batting_rating > 0 and bowling_rating > 0:
         overall_rating = (batting_rating + bowling_rating) / 2
     
     return {
-        'name': name,
-        'role': role,
+        'name': player['name'],
         'batting_rating': batting_rating,
         'bowling_rating': bowling_rating,
-        'overall_rating': overall_rating
+        'overall_rating': overall_rating,
+        'batting': batting_stats,
+        'bowling': bowling_stats
     }
 
 def predict_best_xi(performances):
     """Predict the best XI based on recent performances"""
-    rated_players = [calculate_player_rating(player) for player in performances.values()]
+    # Create rated players with their performance data
+    rated_players = []
+    for player_id, player_data in performances.items():
+        player_data['id'] = player_id
+        rating = calculate_player_rating(player_data)
+        rated_players.append(rating)
     
-    # Separate players by role
-    wicketkeepers = sorted(
-        [p for p in rated_players if p['role'] == "Wicketkeeper"],
-        key=lambda x: x['overall_rating'],
-        reverse=True
-    )
-    batsmen = sorted(
-        [p for p in rated_players if p['role'] == "Batsman"],
-        key=lambda x: x['overall_rating'],
-        reverse=True
-    )
-    bowlers = sorted(
-        [p for p in rated_players if p['role'] == "Bowler"],
-        key=lambda x: x['overall_rating'],
-        reverse=True
-    )
-    allrounders = sorted(
-        [p for p in rated_players if p['role'] == "All-rounder"],
-        key=lambda x: x['overall_rating'],
-        reverse=True
-    )
+    # Sort all players by overall rating
+    rated_players.sort(key=lambda x: x['overall_rating'], reverse=True)
     
-    best_xi = []
-    selected_players = set()  # Keep track of selected players
+    # Select top 11 players
+    best_xi = rated_players[:11]
     
-    # 1. Select wicketkeeper (mandatory)
-    if wicketkeepers:
-        best_xi.append(('wicketkeeper', wicketkeepers[0]))
-        selected_players.add(wicketkeepers[0]['name'])
-    elif batsmen:  # If no specialist keeper, use a batsman
-        best_xi.append(('wicketkeeper', batsmen[0]))
-        selected_players.add(batsmen[0]['name'])
-        batsmen = batsmen[1:]
+    # Remaining players go to bench strength
+    bench_strength = rated_players[11:]
     
-    # 2. Select top order batsmen (3-4)
-    for i in range(min(4, len(batsmen))):
-        best_xi.append(('batsman', batsmen[i]))
-        selected_players.add(batsmen[i]['name'])
-    
-    # 3. Select all-rounders (2-3)
-    for i in range(min(3, len(allrounders))):
-        best_xi.append(('allrounder', allrounders[i]))
-        selected_players.add(allrounders[i]['name'])
-    
-    # 4. Select bowlers (remaining spots, minimum 4)
-    remaining_spots = 11 - len(best_xi)
-    for i in range(min(remaining_spots, len(bowlers))):
-        best_xi.append(('bowler', bowlers[i]))
-        selected_players.add(bowlers[i]['name'])
-    
-    # If we still need players, add more batsmen or all-rounders
-    while len(best_xi) < 11:
-        if len(batsmen) > 4:
-            best_xi.append(('batsman', batsmen[4]))
-            selected_players.add(batsmen[4]['name'])
-            batsmen = batsmen[5:]
-        elif len(allrounders) > 3:
-            best_xi.append(('allrounder', allrounders[3]))
-            selected_players.add(allrounders[3]['name'])
-            allrounders = allrounders[4:]
-        else:
-            break
-    
-    # After selecting best XI, create bench strength
-    bench_strength = []
-    for player in rated_players:
-        if player['name'] not in selected_players:
-            bench_strength.append(player)
-    
-    # Sort bench strength by overall rating
-    bench_strength.sort(key=lambda x: x['overall_rating'], reverse=True)
-    
-    # Organize for display
     return {
-        'wicketkeeper': [p[1] for p in best_xi if p[0] == 'wicketkeeper'],
-        'batsmen': [p[1] for p in best_xi if p[0] == 'batsman'],
-        'allrounders': [p[1] for p in best_xi if p[0] == 'allrounder'],
-        'bowlers': [p[1] for p in best_xi if p[0] == 'bowler'],
-        'total_rating': sum(p[1]['overall_rating'] for p in best_xi) / len(best_xi) if best_xi else 0,
-        'bench_strength': bench_strength  # Add bench strength to return value
+        'players': best_xi,
+        'total_rating': sum(p['overall_rating'] for p in best_xi) / len(best_xi) if best_xi else 0,
+        'bench_strength': bench_strength
     }
 
 if __name__ == "__main__":
@@ -528,31 +478,13 @@ if __name__ == "__main__":
         best_xi = predict_best_xi(performances)
         
         print("\nPredicted Best XI:")
-        print("\nWicketkeeper:")
-        for player in best_xi['wicketkeeper']:
-            print(f"{player['name']} - Rating: {player['batting_rating']:.1f}")
-        
-        print("\nBatsmen:")
-        for player in best_xi['batsmen']:
-            print(f"{player['name']} - Rating: {player['batting_rating']:.1f}")
-        
-        print("\nAll-rounders:")
-        for player in best_xi['allrounders']:
-            print(f"{player['name']} - Batting: {player['batting_rating']:.1f}, Bowling: {player['bowling_rating']:.1f}")
-        
-        print("\nBowlers:")
-        for player in best_xi['bowlers']:
-            print(f"{player['name']} - Rating: {player['bowling_rating']:.1f}")
+        for player in best_xi['players']:
+            print(f"{player['name']} - Rating: {player['overall_rating']:.1f}")
         
         print(f"\nTeam Rating: {best_xi['total_rating']:.1f}")
         
         # Verify team composition
-        total_players = (
-            len(best_xi['wicketkeeper']) +
-            len(best_xi['batsmen']) +
-            len(best_xi['allrounders']) +
-            len(best_xi['bowlers'])
-        )
+        total_players = len(best_xi['players'])
         print(f"\nTotal players selected: {total_players}")
     else:
         print("Failed to collect performance data") 

@@ -33,27 +33,49 @@ body {
 }
 
 .player-card {
-    border-radius: 10px;
-    overflow: hidden;
+    padding: 1rem;
     background: white;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 1rem;
 }
 
-.player-card .header {
-    background: var(--primary-blue);
-    color: white;
-    padding: 1rem;
+.player-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #212529;
 }
 
-.player-card .stats {
-    padding: 1rem;
+.stats-grid {
+    display: grid;
+    gap: 0.75rem;
 }
 
 .stat-item {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-item .label {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.progress {
+    height: 1.5rem;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
 }
 
 /* Add more custom styles as needed */
@@ -152,4 +174,153 @@ body {
 .bench-strength .text-muted {
     font-size: 0.9rem;
     margin-bottom: 1rem;
+}
+
+/* Add these new styles */
+.stat-section {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.stat-section-title {
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #212529;
+}
+
+.player-header {
+    cursor: pointer;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.player-header:hover {
+    background: #e9ecef;
+}
+
+.player-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.rating-summary {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rating-summary .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+}
+
+.player-header .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.player-header[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.stats-grid {
+    padding: 1rem;
+    background: white;
+    border-radius: 0 0 8px 8px;
+    margin-top: 0.5rem;
+}
+
+.stat-section {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.stat-section-title {
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Add these styles for sorting */
+.sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sort-icon {
+    margin-left: 5px;
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+th[data-direction="asc"] .sort-icon,
+th[data-direction="desc"] .sort-icon {
+    color: #007bff;
+}
+
+/* Make tables more responsive */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table th {
+    white-space: nowrap;
+    background-color: #f8f9fa;
+}
+
+/* Authentication form styles */
+.auth-form .card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.auth-form .card:hover {
+    transform: translateY(-5px);
+}
+
+.auth-form .card-header {
+    border-bottom: none;
+}
+
+.auth-form .form-label {
+    font-weight: 500;
+}
+
+.auth-form .text-muted {
+    font-size: 0.85rem;
+}
+
+.auth-form .alert {
+    margin-bottom: 1.5rem;
+}
+
+.auth-form .btn-primary {
+    padding: 0.75rem;
+    font-weight: 500;
+}
+
+/* Add styles for the welcome message */
+.nav-item .nav-link.welcome-message {
+    font-weight: 500;
+    color: #fff;
 }

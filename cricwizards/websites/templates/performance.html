@@ -11,18 +11,18 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="allrounder-table">
                     <thead>
                         <tr>
-                            <th>Player</th>
-                            <th>Matches</th>
-                            <th>Runs</th>
-                            <th>Bat Avg</th>
-                            <th>SR</th>
-                            <th>Wickets</th>
-                            <th>Economy</th>
-                            <th>Bowl Avg</th>
-                            <th>Rating</th>
+                            <th class="sortable" data-sort="name">Player <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="matches">Matches <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="runs">Runs <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="batting_average">Bat Avg <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="strike_rate">SR <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="wickets">Wickets <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="economy">Economy <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="bowling_average">Bowl Avg <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="all_round_rating">Rating <span class="sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,15 +60,15 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="batting-table">
                     <thead>
                         <tr>
-                            <th>Player</th>
-                            <th>Matches</th>
-                            <th>Runs</th>
-                            <th>Average</th>
-                            <th>Strike Rate</th>
-                            <th>Highest Score</th>
+                            <th class="sortable" data-sort="name">Player <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="matches">Matches <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="runs">Runs <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="average">Average <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="strike_rate">Strike Rate <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="highest">Highest Score <span class="sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,14 +95,14 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="bowling-table">
                     <thead>
                         <tr>
-                            <th>Player</th>
-                            <th>Matches</th>
-                            <th>Wickets</th>
-                            <th>Economy</th>
-                            <th>Best Figures</th>
+                            <th class="sortable" data-sort="name">Player <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="matches">Matches <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="wickets">Wickets <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="economy">Economy <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="best">Best Figures <span class="sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -159,4 +159,57 @@
         </div>
     </div>
 </div>
+
+<!-- Add sorting JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tables = ['allrounder-table', 'batting-table', 'bowling-table'];
+    
+    tables.forEach(tableId => {
+        const table = document.getElementById(tableId);
+        const headers = table.querySelectorAll('th.sortable');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortBy = header.dataset.sort;
+                const currentDirection = header.dataset.direction || 'asc';
+                const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+                
+                // Update sort direction
+                headers.forEach(h => {
+                    h.dataset.direction = '';
+                    h.querySelector('.sort-icon').textContent = '↕';
+                });
+                header.dataset.direction = newDirection;
+                header.querySelector('.sort-icon').textContent = newDirection === 'asc' ? '^' : '˅';
+                
+                // Sort the table
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    const aValue = a.children[Array.from(header.parentNode.children).indexOf(header)].textContent;
+                    const bValue = b.children[Array.from(header.parentNode.children).indexOf(header)].textContent;
+                    
+                    // Handle numeric values
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return newDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                    }
+                    
+                    // Handle text values
+                    return newDirection === 'asc' 
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
+                });
+                
+                // Reorder rows
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
