@@ -21,28 +21,173 @@ def make_request(url, params):
         print(f"Request failed: {str(e)}")
         return None
 
-def get_recent_t20i_performances(team_id=None):
-    """Get recent T20I performances for a team's players"""
-    if team_id is None:
-        team_id = 1  # Default to Pakistan
-    
-    # Get team data
+def get_team_name(team_id):
+    """Get team name from team ID"""
+    # First get all teams
     team_url = "https://cricket.sportmonks.com/api/v2.0/teams"
     team_params = {
         "api_token": API_TOKEN,
-        "filter[id]": team_id
+        "per_page": 100  # Get more teams to ensure we find the one we want
     }
     
-    print(f"Getting team data for ID: {team_id}...")
-    team_response = make_request(team_url, team_params)
-    if not team_response or team_response.status_code != 200:
+    response = make_request(team_url, team_params)
+    if response and response.status_code == 200:
+        data = response.json()
+        if data.get('data'):
+            # Find the team with matching ID
+            for team in data['data']:
+                if team.get('id') == team_id:
+                    return team.get('name')
+    return None
+
+def get_team_players(team_id):
+    """Get all players for a team"""
+    # First get team details
+    team_name = get_team_name(team_id)
+    if not team_name:
+        print(f"Could not find team with ID {team_id}")
+        return None
+        
+    # Then get team squad
+    team_url = f"https://cricket.sportmonks.com/api/v2.0/teams/{team_id}"
+    team_params = {
+        "api_token": API_TOKEN,
+        "include": "squad"
+    }
+    
+    response = make_request(team_url, team_params)
+    if not response or response.status_code != 200:
+        return None
+        
+    data = response.json()
+    if not data.get('data'):
+        return None
+        
+    team_data = data['data']
+    squad = team_data.get('squad', {}).get('data', [])
+    
+    # If squad is a list, use it directly
+    if isinstance(squad, list):
+        players_list = squad
+    else:
+        # If squad is a dict, try to get the data field
+        players_list = squad.get('data', [])
+    
+    players = {}
+    for player in players_list:
+        player_id = player.get('id')
+        if player_id:
+            players[player_id] = {
+                'id': player_id,
+                'name': player.get('fullname'),
+                'matches': 0,
+                'batting': {
+                    'innings': 0,
+                    'runs': 0,
+                    'balls': 0,
+                    'fours': 0,
+                    'sixes': 0,
+                    'highest': 0
+                },
+                'bowling': {
+                    'innings': 0,
+                    'overs': 0,
+                    'wickets': 0,
+                    'runs': 0,
+                    'best': '0/0'
+                }
+            }
+    
+    # If no players found in squad, try to get players from recent matches
+    if not players:
+        print(f"No squad data found for {team_name}, trying to get players from recent matches...")
+        fixtures_url = "https://cricket.sportmonks.com/api/v2.0/fixtures"
+        fixtures_params = {
+            "api_token": API_TOKEN,
+            "filter[type]": "T20I",
+            "filter[status]": "Finished",
+            "$or[localteam_id]": team_id,
+            "$or[visitorteam_id]": team_id,
+            "include": "localteam,visitorteam,batting.batsman,bowling.bowler",
+            "sort": "-starting_at",
+            "per_page": 5
+        }
+        
+        fixtures_response = make_request(fixtures_url, fixtures_params)
+        if fixtures_response and fixtures_response.status_code == 200:
+            matches = fixtures_response.json().get('data', [])
+            for match in matches:
+                # Process batting
+                batting = match.get('batting', [])
+                for innings in batting:
+                    if innings.get('team_id') == team_id:
+                        batsman = innings.get('batsman', {})
+                        player_id = batsman.get('id')
+                        if player_id and player_id not in players:
+                            players[player_id] = {
+                                'id': player_id,
+                                'name': batsman.get('fullname'),
+                                'matches': 0,
+                                'batting': {
+                                    'innings': 0,
+                                    'runs': 0,
+                                    'balls': 0,
+                                    'fours': 0,
+                                    'sixes': 0,
+                                    'highest': 0
+                                },
+                                'bowling': {
+                                    'innings': 0,
+                                    'overs': 0,
+                                    'wickets': 0,
+                                    'runs': 0,
+                                    'best': '0/0'
+                                }
+                            }
+                
+                # Process bowling
+                bowling = match.get('bowling', [])
+                for spell in bowling:
+                    if spell.get('team_id') == team_id:
+                        bowler = spell.get('bowler', {})
+                        player_id = bowler.get('id')
+                        if player_id and player_id not in players:
+                            players[player_id] = {
+                                'id': player_id,
+                                'name': bowler.get('fullname'),
+                                'matches': 0,
+                                'batting': {
+                                    'innings': 0,
+                                    'runs': 0,
+                                    'balls': 0,
+                                    'fours': 0,
+                                    'sixes': 0,
+                                    'highest': 0
+                                },
+                                'bowling': {
+                                    'innings': 0,
+                                    'overs': 0,
+                                    'wickets': 0,
+                                    'runs': 0,
+                                    'best': '0/0'
+                                }
+                            }
+    
+    return players
+
+def get_recent_t20i_performances(team_id):
+    """Get recent T20I performances for specified team's players"""
+    if team_id is None:
+        return None
+        
+    team_name = get_team_name(team_id)
+    if not team_name:
+        print(f"Could not find team with ID {team_id}")
         return None
     
-    team_data = team_response.json().get('data', [])[0]
-    team_name = team_data.get('name')
-    print(f"Found team: {team_name}")
+    print(f"Getting {team_name} team data...")
     
-    # Get recent T20I fixtures where Pakistan was either local or visitor team
+    # Get recent T20I fixtures where team was either local or visitor team
     fixtures_url = "https://cricket.sportmonks.com/api/v2.0/fixtures"
     fixtures_params = {
         "api_token": API_TOKEN,
@@ -65,7 +210,7 @@ def get_recent_t20i_performances(team_id=None):
             "filter[status]": "Finished",
             "include": "localteam,visitorteam,batting.batsman,bowling.bowler",
             "sort": "-starting_at",
-            "per_page": 20  # Get more matches to filter Pakistan's matches
+            "per_page": 20  # Get more matches to filter team's matches
         }
         
         print("\nTrying alternative approach...")
@@ -75,37 +220,37 @@ def get_recent_t20i_performances(team_id=None):
     
     matches = fixtures_response.json().get('data', [])
     
-    # Filter matches where Pakistan played
-    pakistan_matches = []
+    # Filter matches where team played
+    team_matches = []
     for match in matches:
         local_team = match.get('localteam', {}).get('id')
         visitor_team = match.get('visitorteam', {}).get('id')
         
         if team_id in [local_team, visitor_team]:
-            pakistan_matches.append(match)
-            if len(pakistan_matches) >= 5:  # Only get last 5 matches
+            team_matches.append(match)
+            if len(team_matches) >= 5:  # Only get last 5 matches
                 break
     
-    print(f"\nFound {len(pakistan_matches)} Pakistan T20I matches")
+    print(f"\nFound {len(team_matches)} {team_name} T20I matches")
     
     # Collect player performances
     player_performances = {}
     
-    for match in pakistan_matches:
+    for match in team_matches:
         match_date = match.get('starting_at')
         print(f"\nProcessing match from {match_date}")
         local_team = match.get('localteam', {})
         visitor_team = match.get('visitorteam', {})
         print(f"{local_team.get('name')} vs {visitor_team.get('name')}")
         
-        # Determine which team is Pakistan
-        is_pakistan_local = local_team.get('name') == 'Pakistan'
-        pakistan_team_id = local_team.get('id') if is_pakistan_local else visitor_team.get('id')
+        # Determine which team is our target team
+        is_team_local = local_team.get('id') == team_id
+        team_team_id = local_team.get('id') if is_team_local else visitor_team.get('id')
         
-        # Process batting performances - only Pakistani players
+        # Process batting performances
         batting = match.get('batting', [])
         for innings in batting:
-            if innings.get('team_id') == pakistan_team_id:  # Only Pakistani team players
+            if innings.get('team_id') == team_team_id:
                 batsman = innings.get('batsman', {})
                 player_id = batsman.get('id')
                 
@@ -143,16 +288,35 @@ def get_recent_t20i_performances(team_id=None):
                 if score > perf['batting']['highest']:
                     perf['batting']['highest'] = score
         
-        # Process bowling performances - only Pakistani players
+        # Process bowling performances
         bowling = match.get('bowling', [])
         for spell in bowling:
-            if spell.get('team_id') == pakistan_team_id:  # Only Pakistani team players
+            if spell.get('team_id') == team_team_id:
                 bowler = spell.get('bowler', {})
                 player_id = bowler.get('id')
                 
                 if player_id not in player_performances:
-                    continue  # Skip if player not already in batting
-                    
+                    player_performances[player_id] = {
+                        'id': player_id,
+                        'name': bowler.get('fullname'),
+                        'matches': 0,
+                        'batting': {
+                            'innings': 0,
+                            'runs': 0,
+                            'balls': 0,
+                            'fours': 0,
+                            'sixes': 0,
+                            'highest': 0
+                        },
+                        'bowling': {
+                            'innings': 0,
+                            'overs': 0,
+                            'wickets': 0,
+                            'runs': 0,
+                            'best': '0/0'
+                        }
+                    }
+                
                 perf = player_performances[player_id]
                 perf['bowling']['innings'] += 1
                 perf['bowling']['overs'] += spell.get('overs', 0)

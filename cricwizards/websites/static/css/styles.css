@@ -96,23 +96,35 @@ body {
     transition: width 0.6s ease;
 }
 
+/* Team Selection Page Styles */
+.team-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+}
+
 .team-button {
-    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #dee2e6;
     border-radius: 10px;
-    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
 }
 
 .team-button:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
 }
 
 .team-flag {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    font-size: 4rem;
+    line-height: 1;
 }
 
 .team-name {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 600;
 }

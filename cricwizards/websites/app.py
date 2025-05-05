@@ -9,53 +9,113 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from src.get_pakistan_t20 import get_recent_t20i_performances, predict_best_xi
+from src.get_pakistan_t20 import (
+    get_recent_t20i_performances,
+    predict_best_xi,
+    get_team_name,
+    calculate_player_rating
+)
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Define teams data
+TEAMS = [
+    {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
+    {'id': 38, 'name': 'England', 'flag': '🏴'},
+    {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
+    {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
+    {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},
+    {'id': 39, 'name': 'Sri Lanka', 'flag': '🇱🇰'},
+    {'id': 1,  'name': 'Pakistan', 'flag': '🇵🇰'},
+    {'id': 43, 'name': 'West Indies', 'flag': '🇻🇨'},
+    {'id': 37, 'name': 'Bangladesh', 'flag': '🇧🇩'},
+    {'id': 100,'name': 'Ireland', 'flag': '🇮🇪'},
+    {'id': 46, 'name': 'Afghanistan', 'flag': '🇦🇫'},
+    {'id': 41, 'name': 'Zimbabwe', 'flag': '🇿🇼'}
+]
 
-# @app.route('/predict')
-# def predict():
-@app.route('/predict', methods=['GET', 'POST'])
+@app.route('/')
+def home():
+    return render_template('index.html', teams=TEAMS)
+
+@app.route('/predict', methods=['POST'])
 def predict():
-    if request.method == 'POST':
+    try:
         team_id = request.form.get('team_id')
-        try:
-            performances = get_recent_t20i_performances(team_id=team_id)
-            if performances:
-                best_xi = predict_best_xi(performances)
-                trends = analyze_performance_trends(performances)
-                return render_template('predict.html', 
-                                     team=best_xi, 
-                                     trends=trends)
-            return render_template('error.html', message="No data available")
-        except Exception as e:
-            return render_template('error.html', message=str(e))
-    return render_template('index.html')
+        if not team_id:
+            return render_template('error.html', message="No team selected")
+        
+        print(f"Fetching data for team ID: {team_id}")
+        
+        # Get team name first
+        team_name = get_team_name(int(team_id))
+        if not team_name:
+            return render_template('error.html', message=f"Could not find team with ID {team_id}")
+        
+        # Get player performances
+        performances = get_recent_t20i_performances(int(team_id))
+        if not performances:
+            return render_template('error.html', message=f"No performance data available for {team_name}")
+        
+        # Calculate player ratings
+        rated_players = [calculate_player_rating(player) for player in performances.values()]
+        
+        # Predict best XI
+        best_xi = predict_best_xi(performances)
+        
+        # Calculate team stats
+        team_stats = calculate_team_stats(performances)
+        
+        return render_template('predict.html',
+                             team_name=team_name,
+                             best_xi=best_xi,
+                             team_stats=team_stats)
+                             
+    except Exception as e:
+        print(f"Error in predict route: {str(e)}")
+        return render_template('error.html', 
+                             message=f"An error occurred while processing the team data: {str(e)}")
 
 @app.route('/performance')
 def performance():
+    team_id = request.args.get('team_id')
+    if not team_id:
+        return render_template('error.html', message="No team selected")
+        
     try:
-        performances = get_recent_t20i_performances()
-        if performances:
-            # Convert performances to DataFrame for analysis
-            df = pd.DataFrame(performances.values())
-            
-            # Calculate performance metrics
-            batting_stats = calculate_batting_stats(df)
-            bowling_stats = calculate_bowling_stats(df)
-            allrounder_stats = calculate_allrounder_stats(df)
-            
-            return render_template('performance.html',
-                                 batting_stats=batting_stats,
-                                 bowling_stats=bowling_stats,
-                                 allrounder_stats=allrounder_stats)
-        return render_template('error.html', message="No performance data available")
+        print(f"Fetching performance data for team ID: {team_id}")
+        performances = get_recent_t20i_performances(int(team_id))
+        
+        if not performances:
+            return render_template('error.html', 
+                                 message=f"No recent performance data available for this team. Please try another team.")
+        
+        # Convert performances to DataFrame for analysis
+        df = pd.DataFrame(performances.values())
+        
+        # Calculate performance metrics
+        batting_stats = calculate_batting_stats(df)
+        bowling_stats = calculate_bowling_stats(df)
+        allrounder_stats = calculate_allrounder_stats(df)
+        
+        team_name = get_team_name(int(team_id))
+        if not team_name:
+            return render_template('error.html', 
+                                 message=f"Could not find team information for ID: {team_id}")
+        
+        return render_template('performance.html',
+                             batting_stats=batting_stats,
+                             bowling_stats=bowling_stats,
+                             allrounder_stats=allrounder_stats,
+                             team_name=team_name)
+                             
+    except ValueError as e:
+        return render_template('error.html', 
+                             message=f"Invalid team ID: {team_id}")
     except Exception as e:
-        return render_template('error.html', message=str(e))
+        print(f"Error processing team {team_id}: {str(e)}")
+        return render_template('error.html', 
+                             message=f"An error occurred while processing the team data: {str(e)}")
 
 def analyze_performance_trends(performances):
     """Analyze recent performance trends"""
@@ -162,6 +222,60 @@ def calculate_all_round_rating(player):
     ) if player['bowling']['innings'] > 0 else 0
     
     return batting_points + bowling_points
+
+def calculate_team_stats(performances):
+    """Calculate overall team statistics"""
+    stats = {
+        'total_players': len(performances),
+        'batting': {
+            'total_runs': 0,
+            'total_innings': 0,
+            'total_balls': 0,
+            'total_fours': 0,
+            'total_sixes': 0
+        },
+        'bowling': {
+            'total_wickets': 0,
+            'total_overs': 0,
+            'total_runs': 0
+        }
+    }
+    
+    for player in performances.values():
+        # Batting stats
+        stats['batting']['total_runs'] += player['batting']['runs']
+        stats['batting']['total_innings'] += player['batting']['innings']
+        stats['batting']['total_balls'] += player['batting']['balls']
+        stats['batting']['total_fours'] += player['batting']['fours']
+        stats['batting']['total_sixes'] += player['batting']['sixes']
+        
+        # Bowling stats
+        stats['bowling']['total_wickets'] += player['bowling']['wickets']
+        stats['bowling']['total_overs'] += player['bowling']['overs']
+        stats['bowling']['total_runs'] += player['bowling']['runs']
+    
+    # Calculate averages and rates
+    if stats['batting']['total_innings'] > 0:
+        stats['batting']['average'] = stats['batting']['total_runs'] / stats['batting']['total_innings']
+    else:
+        stats['batting']['average'] = 0
+        
+    if stats['batting']['total_balls'] > 0:
+        stats['batting']['strike_rate'] = (stats['batting']['total_runs'] / stats['batting']['total_balls']) * 100
+    else:
+        stats['batting']['strike_rate'] = 0
+        
+    if stats['bowling']['total_overs'] > 0:
+        stats['bowling']['economy_rate'] = stats['bowling']['total_runs'] / stats['bowling']['total_overs']
+    else:
+        stats['bowling']['economy_rate'] = 0
+        
+    if stats['bowling']['total_wickets'] > 0:
+        stats['bowling']['bowling_average'] = stats['bowling']['total_runs'] / stats['bowling']['total_wickets']
+    else:
+        stats['bowling']['bowling_average'] = 0
+    
+    return stats
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,33 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container text-center mt-5">
-    <h1 class="mb-4">CricWizards XI</h1>
-    <h3 class="mb-4">Select a Team</h3>
-    <div class="row justify-content-center">
-        {% set teams = [
-            {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
-            {'id': 38, 'name': 'England', 'flag': '🏴'},
-            {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
-            {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
-            {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},
-            {'id': 39, 'name': 'Sri Lanka', 'flag': '🇱🇰'},
-            {'id': 1,  'name': 'Pakistan', 'flag': '🇵🇰'},
-            {'id': 43, 'name': 'West Indies', 'flag': '🇻🇨'},
-            {'id': 37, 'name': 'Bangladesh', 'flag': '🇧🇩'},
-            {'id': 100,'name': 'Ireland', 'flag': '🇮🇪'},
-            {'id': 46, 'name': 'Afghanistan', 'flag': '🇦🇫'},
-            {'id': 41, 'name': 'Zimbabwe', 'flag': '🇿🇼'}
-        ] %}
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-4">Select Your Team</h1>
+        <p class="lead">Choose a team to view their performance analysis and predicted best XI</p>
+    </div>
+    
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
         {% for team in teams %}
-        <div class="col-6 col-md-3 mb-4">
-            <form action="{{ url_for('predict') }}" method="post">
-                <input type="hidden" name="team_id" value="{{ team.id }}">
-                <button type="submit" class="btn btn-outline-primary w-100 py-3" style="font-size:2rem;">
-                    <span>{{ team.flag }}</span><br>
-                    <span style="font-size:1rem;">{{ team.name }}</span>
-                </button>
-            </form>
+        <div class="col">
+            <div class="team-card h-100">
+                <form action="{{ url_for('predict') }}" method="post">
+                    <input type="hidden" name="team_id" value="{{ team.id }}">
+                    <button type="submit" class="btn btn-light w-100 h-100 p-4 team-button">
+                        <div class="team-flag mb-3">{{ team.flag }}</div>
+                        <h3 class="team-name">{{ team.name }}</h3>
+                    </button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
