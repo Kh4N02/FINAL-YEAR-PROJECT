@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="prediction-container">
+    <h1>Predicted Best XI</h1>
+    
+    {% if team %}
+        <div class="team-section">
+            <h2>Wicketkeeper</h2>
+            {% for player in team.wicketkeeper %}
+            <div class="player-card">
+                <h3>{{ player.name }}</h3>
+                <p>Rating: {{ "%.1f"|format(player.batting_rating) }}</p>
+            </div>
+            {% endfor %}
+
+            <h2>Batsmen</h2>
+            {% for player in team.batsmen %}
+            <div class="player-card">
+                <h3>{{ player.name }}</h3>
+                <p>Rating: {{ "%.1f"|format(player.batting_rating) }}</p>
+            </div>
+            {% endfor %}
+
+            <h2>All-rounders</h2>
+            {% for player in team.allrounders %}
+            <div class="player-card">
+                <h3>{{ player.name }}</h3>
+                <p>Batting: {{ "%.1f"|format(player.batting_rating) }}</p>
+                <p>Bowling: {{ "%.1f"|format(player.bowling_rating) }}</p>
+            </div>
+            {% endfor %}
+
+            <h2>Bowlers</h2>
+            {% for player in team.bowlers %}
+            <div class="player-card">
+                <h3>{{ player.name }}</h3>
+                <p>Rating: {{ "%.1f"|format(player.bowling_rating) }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="team-stats">
+            <h2>Team Rating: {{ "%.1f"|format(team.total_rating) }}</h2>
+        </div>
+    {% else %}
+        <p>No team data available</p>
+    {% endif %}
+</div>
+{% endblock %}

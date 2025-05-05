@@ -84,7 +84,7 @@ def get_recent_t20i_performances():
     
     print(f"\nFound {len(pakistan_matches)} Pakistan T20I matches")
     
-    # Collect player performances
+    # Initialize player_performances with all players first
     player_performances = {}
     
     for match in pakistan_matches:
@@ -98,18 +98,47 @@ def get_recent_t20i_performances():
         is_pakistan_local = local_team.get('name') == 'Pakistan'
         pakistan_team_id = local_team.get('id') if is_pakistan_local else visitor_team.get('id')
         
-        # Process batting performances - only Pakistani players
+        # Get all players from the squad first (if available)
+        squad = match.get('squad', [])
+        for player in squad:
+            if player.get('team_id') == pakistan_team_id:
+                player_id = player.get('id')
+                if player_id not in player_performances:
+                    player_performances[player_id] = {
+                        'id': player_id,
+                        'name': player.get('fullname'),
+                        'matches': 0,
+                        'batting': {
+                            'innings': 0,
+                            'runs': 0,
+                            'balls': 0,
+                            'fours': 0,
+                            'sixes': 0,
+                            'highest': 0
+                        },
+                        'bowling': {
+                            'innings': 0,
+                            'overs': 0,
+                            'wickets': 0,
+                            'runs': 0,
+                            'best': '0/0'
+                        }
+                    }
+                player_performances[player_id]['matches'] += 1
+        
+        # Process batting performances
         batting = match.get('batting', [])
         for innings in batting:
-            if innings.get('team_id') == pakistan_team_id:  # Only Pakistani team players
+            if innings.get('team_id') == pakistan_team_id:
                 batsman = innings.get('batsman', {})
                 player_id = batsman.get('id')
                 
+                # Initialize player if not already done
                 if player_id not in player_performances:
                     player_performances[player_id] = {
                         'id': player_id,
                         'name': batsman.get('fullname'),
-                        'matches': 0,
+                        'matches': 1,  # Count this match
                         'batting': {
                             'innings': 0,
                             'runs': 0,
@@ -128,7 +157,6 @@ def get_recent_t20i_performances():
                     }
                 
                 perf = player_performances[player_id]
-                perf['matches'] += 1
                 perf['batting']['innings'] += 1
                 perf['batting']['runs'] += innings.get('score', 0)
                 perf['batting']['balls'] += innings.get('ball', 0)
@@ -139,16 +167,36 @@ def get_recent_t20i_performances():
                 if score > perf['batting']['highest']:
                     perf['batting']['highest'] = score
         
-        # Process bowling performances - only Pakistani players
+        # Process bowling performances
         bowling = match.get('bowling', [])
         for spell in bowling:
-            if spell.get('team_id') == pakistan_team_id:  # Only Pakistani team players
+            if spell.get('team_id') == pakistan_team_id:
                 bowler = spell.get('bowler', {})
                 player_id = bowler.get('id')
                 
+                # Initialize player if not already done
                 if player_id not in player_performances:
-                    continue  # Skip if player not already in batting
-                    
+                    player_performances[player_id] = {
+                        'id': player_id,
+                        'name': bowler.get('fullname'),
+                        'matches': 1,  # Count this match
+                        'batting': {
+                            'innings': 0,
+                            'runs': 0,
+                            'balls': 0,
+                            'fours': 0,
+                            'sixes': 0,
+                            'highest': 0
+                        },
+                        'bowling': {
+                            'innings': 0,
+                            'overs': 0,
+                            'wickets': 0,
+                            'runs': 0,
+                            'best': '0/0'
+                        }
+                    }
+                
                 perf = player_performances[player_id]
                 perf['bowling']['innings'] += 1
                 perf['bowling']['overs'] += spell.get('overs', 0)
