@@ -1,9 +1,0 @@
-# Redirect base.html to index.html
-RedirectMatch 301 ^/fyp/website/templates/base.html$ /fyp/index.html
-
-# Default page
-DirectoryIndex index.html
-
-# Enable directory listing if needed
-Options +Indexes
-IndexOptions FancyIndexing 

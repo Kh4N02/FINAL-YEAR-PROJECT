@@ -149,6 +149,7 @@ def predict():
             team_id = request.args.get('team_id') or session.get('team_id')
         
         if not team_id:
+            flash('Please select a team first.', 'warning')
             return redirect(url_for('home'))
         
         # Store team_id in session
@@ -159,12 +160,14 @@ def predict():
         # Get team name first
         team_name = get_team_name(int(team_id))
         if not team_name:
-            return render_template('error.html', message=f"Could not find team with ID {team_id}")
+            flash('Could not find team information. Please try another team.', 'warning')
+            return redirect(url_for('home'))
         
         # Get player performances
         performances = get_recent_t20i_performances(int(team_id))
         if not performances:
-            return render_template('error.html', message=f"No performance data available for {team_name}")
+            flash('No performance data available for this team. Please try another team.', 'warning')
+            return redirect(url_for('home'))
         
         # Calculate player ratings
         rated_players = []
@@ -186,9 +189,13 @@ def predict():
                     player_data = response.json().get('data')
                     if player_data:
                         player['image_path'] = player_data.get('image_path')
+                        if not player['image_path']:
+                            player['image_path'] = url_for('static', filename='images/default_player.png')
+                else:
+                    player['image_path'] = url_for('static', filename='images/default_player.png')
             except Exception as e:
                 print(f"Error fetching image for player {player['name']}: {str(e)}")
-                player['image_path'] = None
+                player['image_path'] = url_for('static', filename='images/default_player.png')
         
         # Fetch player images for bench strength
         for player in best_xi['bench_strength']:
@@ -200,13 +207,17 @@ def predict():
                     player_data = response.json().get('data')
                     if player_data:
                         player['image_path'] = player_data.get('image_path')
+                        if not player['image_path']:
+                            player['image_path'] = url_for('static', filename='images/default_player.png')
+                else:
+                    player['image_path'] = url_for('static', filename='images/default_player.png')
             except Exception as e:
                 print(f"Error fetching image for player {player['name']}: {str(e)}")
-                player['image_path'] = None
-            
+                player['image_path'] = url_for('static', filename='images/default_player.png')
+        
         # Calculate team stats
         team_stats = calculate_team_stats(performances)
-            
+        
         return render_template('predict.html', 
                              team_name=team_name,
                              best_xi=best_xi,
@@ -214,8 +225,8 @@ def predict():
                              
     except Exception as e:
         print(f"Error in predict route: {str(e)}")
-        return render_template('error.html', 
-                             message=f"An error occurred while processing the team data: {str(e)}")
+        flash(f'An error occurred while processing the team data: {str(e)}', 'danger')
+        return redirect(url_for('home'))
 
 @app.route('/performance')
 @login_required
@@ -223,6 +234,7 @@ def performance():
     team_id = request.args.get('team_id') or session.get('team_id')
     
     if not team_id:
+        flash('Please select a team first.', 'warning')
         return redirect(url_for('home'))
         
     try:
@@ -230,8 +242,8 @@ def performance():
         performances = get_recent_t20i_performances(int(team_id))
         
         if not performances:
-            return render_template('error.html', 
-                                 message=f"No recent performance data available for this team. Please try another team.")
+            flash('No recent performance data available for this team. Please try another team.', 'warning')
+            return redirect(url_for('home'))
         
         # Convert performances to DataFrame for analysis
         df = pd.DataFrame(performances.values())
@@ -255,8 +267,8 @@ def performance():
         
         team_name = get_team_name(int(team_id))
         if not team_name:
-            return render_template('error.html', 
-                                 message=f"Could not find team information for ID: {team_id}")
+            flash('Could not find team information. Please try another team.', 'warning')
+            return redirect(url_for('home'))
         
         return render_template('performance.html',
                              batting_stats=batting_stats,
@@ -267,8 +279,8 @@ def performance():
                              
     except Exception as e:
         print(f"Error processing team {team_id}: {str(e)}")
-        return render_template('error.html', 
-                             message=f"An error occurred while processing the team data: {str(e)}")
+        flash(f'An error occurred while processing the team data: {str(e)}', 'danger')
+        return redirect(url_for('home'))
 
 @app.route('/compare_players', methods=['POST'])
 @login_required
@@ -491,7 +503,7 @@ def player_profile(player_id):
     try:
         print(f"Fetching data for player ID: {player_id}")
         
-        # Get player data from API - simplified to match working Postman request
+        # Get player data from API
         player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player_id}"
         params = {
             "api_token": API_TOKEN
@@ -511,16 +523,14 @@ def player_profile(player_id):
         if not player_data:
             return render_template('error.html', message="Player not found in API response")
             
-        # Get recent performances
+        # Get recent performances if team is selected
         team_id = session.get('team_id')
-        if not team_id:
-            return render_template('error.html', message="No team selected")
-            
-        performances = get_recent_t20i_performances(int(team_id))
-        if not performances:
-            return render_template('error.html', message="Could not fetch recent performances")
-            
-        player_performance = next((p for p in performances.values() if p['id'] == player_id), None)
+        player_performance = None
+        
+        if team_id:
+            performances = get_recent_t20i_performances(int(team_id))
+            if performances:
+                player_performance = next((p for p in performances.values() if p['id'] == player_id), None)
         
         # Initialize career stats with zeros
         career_stats = {

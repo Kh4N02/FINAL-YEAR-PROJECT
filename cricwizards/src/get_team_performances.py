@@ -178,6 +178,13 @@ def get_team_players(team_id):
 def get_recent_t20i_performances(team_id):
     """Get recent T20I performances for specified team's players"""
     if team_id is None:
+        print("No team ID provided")
+        return None
+        
+    try:
+        team_id = int(team_id)  # Convert to int to ensure valid team_id
+    except (ValueError, TypeError):
+        print(f"Invalid team ID: {team_id}")
         return None
         
     team_name = get_team_name(team_id)
