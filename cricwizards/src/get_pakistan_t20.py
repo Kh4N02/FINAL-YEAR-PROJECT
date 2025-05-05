@@ -22,27 +22,25 @@ def make_request(url, params):
         return None
 
 def get_recent_t20i_performances(team_id=None):
-    """Get recent T20I performances for specified team players"""
+    """Get recent T20I performances for Pakistan players"""
     if team_id is None:
         team_id = 1  # Default to Pakistan
-    
-    # Get team data
+    # Get Pakistan team ID first
     team_url = "https://cricket.sportmonks.com/api/v2.0/teams"
     team_params = {
         "api_token": API_TOKEN,
-        "filter[id]": team_id
+        "filter[name]": "Pakistan"
     }
     
-    print(f"Getting team data for ID: {team_id}...")
+    print("Getting Pakistan team data...")
     team_response = make_request(team_url, team_params)
     if not team_response or team_response.status_code != 200:
         return None
     
-    team_data = team_response.json().get('data', [])[0]
-    team_name = team_data.get('name')
-    print(f"Found team: {team_name}")
+    team_id = team_response.json().get('data', [])[0].get('id')
+    print(f"Found Pakistan team ID: {team_id}")
     
-    # Get recent T20I fixtures
+    # Get recent T20I fixtures where Pakistan was either local or visitor team
     fixtures_url = "https://cricket.sportmonks.com/api/v2.0/fixtures"
     fixtures_params = {
         "api_token": API_TOKEN,
@@ -52,7 +50,7 @@ def get_recent_t20i_performances(team_id=None):
         "$or[visitorteam_id]": team_id,
         "include": "localteam,visitorteam,batting.batsman,bowling.bowler",
         "sort": "-starting_at",
-        "per_page": 5
+        "per_page": 5  # Last 5 matches
     }
     
     print("\nFetching recent T20I matches...")
