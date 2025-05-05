@@ -14,7 +14,7 @@ from src.get_pakistan_t20 import get_recent_t20i_performances, predict_best_xi
 app = Flask(__name__)
 
 @app.route('/')
-def home():
+def index():
     return render_template('index.html')
 
 # @app.route('/predict')

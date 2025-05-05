@@ -16,7 +16,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-cricket-bat-ball me-2"></i>
                 CricWizards XI
             </a>
@@ -26,7 +26,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('predict') }}">Predict XI</a>
