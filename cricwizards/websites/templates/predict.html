@@ -13,9 +13,18 @@
                 </div>
                 <div class="card-body">
                     {% for player in best_xi.players %}
-                    <div class="player-card">
+            <div class="player-card">
                         <div class="player-header" data-bs-toggle="collapse" data-bs-target="#stats-{{ player.name|replace(' ', '-') }}" aria-expanded="false">
-                            <h3>{{ player.name }}</h3>
+                <div class="d-flex align-items-center">
+                    {% if player.image_path %}
+                        <img src="{{ player.image_path }}" alt="{{ player.name }}" class="player-thumbnail me-3">
+                    {% else %}
+                        <div class="player-thumbnail-placeholder me-3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    <h3>{{ player.name }}</h3>
+                </div>
                             <div class="rating-summary">
                                 {% if player.batting_rating > 0 %}
                                     <span class="badge bg-primary">Batting: {{ "%.1f"|format(player.batting_rating) }}</span>
@@ -74,8 +83,8 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
+            </div>
+            {% endfor %}
                 </div>
             </div>
             
@@ -88,9 +97,18 @@
                     <div class="row">
                         {% for player in best_xi.bench_strength %}
                         <div class="col-md-4 mb-3">
-                            <div class="player-card">
+            <div class="player-card">
                                 <div class="player-header" data-bs-toggle="collapse" data-bs-target="#bench-stats-{{ player.name|replace(' ', '-') }}" aria-expanded="false">
-                                    <h3>{{ player.name }}</h3>
+                <div class="d-flex align-items-center">
+                    {% if player.image_path %}
+                        <img src="{{ player.image_path }}" alt="{{ player.name }}" class="player-thumbnail me-3">
+                    {% else %}
+                        <div class="player-thumbnail-placeholder me-3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    <h3>{{ player.name }}</h3>
+                </div>
                                     <div class="rating-summary">
                                         {% if player.batting_rating > 0 %}
                                             <span class="badge bg-primary">Batting: {{ "%.1f"|format(player.batting_rating) }}</span>
@@ -144,8 +162,8 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        {% endfor %}
+            </div>
+            {% endfor %}
                     </div>
                 </div>
             </div>
@@ -156,7 +174,7 @@
         </div>
     {% else %}
         <div class="alert alert-warning">
-            <p>No team data available</p>
+        <p>No team data available</p>
         </div>
     {% endif %}
 </div>

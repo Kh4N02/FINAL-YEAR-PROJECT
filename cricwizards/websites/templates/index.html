@@ -14,7 +14,13 @@
                 <form action="{{ url_for('predict') }}" method="post">
                     <input type="hidden" name="team_id" value="{{ team.id }}">
                     <button type="submit" class="btn btn-light w-100 h-100 p-4 team-button">
-                        <div class="team-flag mb-3">{{ team.flag }}</div>
+                        <div class="team-flag mb-3">
+                            {% if team.flag.startswith('http') or team.flag.startswith('/') %}
+                                <img src="{{ team.flag }}" alt="{{ team.name }} flag" class="team-flag-img">
+                            {% else %}
+                                {{ team.flag }}
+                            {% endif %}
+                        </div>
                         <h3 class="team-name">{{ team.name }}</h3>
                     </button>
                 </form>

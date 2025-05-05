@@ -28,7 +28,11 @@
                     <tbody>
                         {% for stat in allrounder_stats %}
                         <tr>
-                            <td>{{ stat.name }}</td>
+                            <td>
+                                <a href="{{ url_for('player_profile', player_id=stat.id) }}" class="player-link">
+                                    {{ stat.name }}
+                                </a>
+                            </td>
                             <td>{{ stat.matches }}</td>
                             <td>{{ stat.runs }}</td>
                             <td>{{ "%.2f"|format(stat.batting_average) }}</td>
@@ -80,7 +84,11 @@
                     <tbody>
                         {% for stat in batting_stats %}
                         <tr>
-                            <td>{{ stat.name }}</td>
+                            <td>
+                                <a href="{{ url_for('player_profile', player_id=stat.id) }}" class="player-link">
+                                    {{ stat.name }}
+                                </a>
+                            </td>
                             <td>{{ stat.matches }}</td>
                             <td>{{ stat.runs }}</td>
                             <td>{{ "%.2f"|format(stat.average) }}</td>
@@ -114,7 +122,11 @@
                     <tbody>
                         {% for stat in bowling_stats %}
                         <tr>
-                            <td>{{ stat.name }}</td>
+                            <td>
+                                <a href="{{ url_for('player_profile', player_id=stat.id) }}" class="player-link">
+                                    {{ stat.name }}
+                                </a>
+                            </td>
                             <td>{{ stat.matches }}</td>
                             <td>{{ stat.wickets }}</td>
                             <td>
@@ -159,8 +171,8 @@
                         <option value="{{ stat.name }}">{{ stat.name }}</option>
                     {% endfor %}
                 </select>
-            </div>
-        </div>
+                                </div>
+                            </div>
         
         <div id="comparisonResults" class="comparison-container" style="display: none;">
             <div class="row">
@@ -175,8 +187,8 @@
                             <h4>Bowling</h4>
                             <div class="stat-grid"></div>
                         </div>
-                    </div>
-                </div>
+                                </div>
+                            </div>
                 <div class="col-md-2 text-center">
                     <div class="comparison-divider"></div>
                 </div>

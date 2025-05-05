@@ -141,8 +141,19 @@ body {
 }
 
 .team-flag {
-    font-size: 4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80px;
+    font-size: 4rem;  /* Size for emoji flags */
     line-height: 1;
+}
+
+.team-flag-img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    display: block;
 }
 
 .team-name {
@@ -158,6 +169,7 @@ body {
     padding: 1rem;
     border-radius: 8px;
     transition: all 0.3s ease;
+    margin-bottom: 1rem;
 }
 
 .bench-strength .player-card:hover {
@@ -171,9 +183,62 @@ body {
     color: #495057;
 }
 
-.bench-strength .text-muted {
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
+.bench-strength .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.bench-strength .stat-item {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.bench-strength .stat-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.bench-strength .stat-item .label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.bench-strength .stat-item .stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.bench-strength .rating-summary {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.bench-strength .rating-summary .badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+}
+
+/* Add responsive adjustments for bench strength */
+@media (max-width: 768px) {
+    .bench-strength .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bench-strength .player-card {
+        margin-bottom: 1rem;
+    }
 }
 
 /* Add these new styles */
@@ -408,4 +473,110 @@ th[data-direction="desc"] .sort-icon {
     .vs-badge {
         margin: 20px 0;
     }
+}
+
+.player-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.player-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Add a subtle hover effect to the entire row */
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Make the player name column slightly wider */
+.table th:first-child,
+.table td:first-child {
+    min-width: 150px;
+}
+
+/* Player Profile Image Styles */
+.player-image {
+    width: 240px;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.player-image-placeholder {
+    width: 240px;
+    height: 240px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: #6c757d;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Player Thumbnail Styles for Predict XI */
+.player-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.player-thumbnail-placeholder {
+    width: 60px;
+    height: 60px;
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #6c757d;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Performance Analysis Rating Styles */
+.performance-analysis .progress {
+    height: 24px;
+    min-width: 80px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0;
+    position: relative;
+}
+
+.performance-analysis .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 40px;
+    padding: 0 8px;
+    transition: width 0.3s ease;
+}
+
+.performance-analysis .progress-bar.bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Ensure the rating column has enough width */
+.performance-analysis th[data-sort="all_round_rating"],
+.performance-analysis td:last-child {
+    min-width: 120px;
+    padding-right: 15px;
+}
+
+/* Add a subtle hover effect to the progress bar */
+.performance-analysis .progress:hover .progress-bar {
+    filter: brightness(1.1);
 }

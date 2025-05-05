@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="player-profile">
+    <!-- Player Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="player-header">
+                        {% if player.image_path %}
+                        <img src="{{ player.image_path }}" alt="{{ player.fullname }}" class="player-image">
+                        {% else %}
+                        <div class="player-image-placeholder">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <h1 class="player-name">{{ player.fullname }}</h1>
+                    <div class="player-info">
+                        {% if player.dateofbirth %}
+                        <p><strong>Date of Birth:</strong> {{ player.dateofbirth }}</p>
+                        {% endif %}
+                        {% if player.battingstyle %}
+                        <p><strong>Batting Style:</strong> {{ player.battingstyle|replace('-', ' ')|title }}</p>
+                        {% endif %}
+                        {% if player.bowlingstyle %}
+                        <p><strong>Bowling Style:</strong> {{ player.bowlingstyle|replace('-', ' ')|title }}</p>
+                        {% endif %}
+                        {% if player.position %}
+                        <p><strong>Role:</strong> {{ player.position.name }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Career Statistics -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Career Statistics</h2>
+        </div>
+        <div class="card-body">
+            <!-- Batting Stats -->
+            <div class="stats-section">
+                <h3 class="h6">Batting</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tr>
+                            <th>Matches</th>
+                            <th>Innings</th>
+                            <th>Runs</th>
+                            <th>Average</th>
+                            <th>Strike Rate</th>
+                            <th>Highest</th>
+                        </tr>
+                        <tr>
+                            <td>{{ career_stats.batting.matches }}</td>
+                            <td>{{ career_stats.batting.innings }}</td>
+                            <td>{{ career_stats.batting.runs }}</td>
+                            <td>{{ "%.2f"|format(career_stats.batting.average) }}</td>
+                            <td>{{ "%.2f"|format(career_stats.batting.strike_rate) }}</td>
+                            <td>{{ career_stats.batting.highest }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Bowling Stats -->
+            <div class="stats-section mt-4">
+                <h3 class="h6">Bowling</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tr>
+                            <th>Matches</th>
+                            <th>Innings</th>
+                            <th>Wickets</th>
+                            <th>Average</th>
+                            <th>Economy</th>
+                            <th>Best</th>
+                        </tr>
+                        <tr>
+                            <td>{{ career_stats.bowling.matches }}</td>
+                            <td>{{ career_stats.bowling.innings }}</td>
+                            <td>{{ career_stats.bowling.wickets }}</td>
+                            <td>
+                                {% if career_stats.bowling.average == '∞' %}
+                                    ∞
+                                {% else %}
+                                    {{ "%.2f"|format(career_stats.bowling.average) }}
+                                {% endif %}
+                            </td>
+                            <td>{{ "%.2f"|format(career_stats.bowling.economy) }}</td>
+                            <td>{{ career_stats.bowling.best }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Form -->
+    {% if recent_performance %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Recent Form</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Matches</th>
+                            <th>Batting</th>
+                            <th>Bowling</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ recent_performance.matches }}</td>
+                            <td>
+                                {% if recent_performance.batting.innings > 0 %}
+                                    {{ recent_performance.batting.runs }} runs
+                                    ({{ "%.2f"|format(recent_performance.batting.runs / recent_performance.batting.innings) }} avg)
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if recent_performance.bowling.innings > 0 %}
+                                    {{ recent_performance.bowling.wickets }} wickets
+                                    ({{ "%.2f"|format(recent_performance.bowling.runs / recent_performance.bowling.overs) }} econ)
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

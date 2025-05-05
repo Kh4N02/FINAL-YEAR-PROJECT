@@ -6,6 +6,7 @@ import pandas as pd
 from flask_sqlalchemy import SQLAlchemy
 from models import db, User
 from functools import wraps
+import requests
 
 # Add the parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +17,8 @@ from src.get_pakistan_t20 import (
     get_recent_t20i_performances,
     predict_best_xi,
     get_team_name,
-    calculate_player_rating
+    calculate_player_rating,
+    API_TOKEN
 )
 
 app = Flask(__name__)
@@ -31,6 +33,23 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+def get_teams():
+    """Get the list of teams with their flags"""
+    return [
+        {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
+        {'id': 38, 'name': 'England', 'flag': url_for('static', filename='images/flags/england_flag.png')},
+        {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
+        {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
+        {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},
+        {'id': 39, 'name': 'Sri Lanka', 'flag': '🇱🇰'},
+        {'id': 1,  'name': 'Pakistan', 'flag': '🇵🇰'},
+        {'id': 43, 'name': 'West Indies', 'flag': '🇻🇨'},
+        {'id': 37, 'name': 'Bangladesh', 'flag': '🇧🇩'},
+        {'id': 100,'name': 'Ireland', 'flag': '🇮🇪'},
+        {'id': 46, 'name': 'Afghanistan', 'flag': '🇦🇫'},
+        {'id': 41, 'name': 'Zimbabwe', 'flag': '🇿🇼'}
+    ]
+
 # Authentication decorator
 def login_required(f):
     @wraps(f)
@@ -41,27 +60,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Define teams data
-TEAMS = [
-    {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
-    {'id': 38, 'name': 'England', 'flag': '🇬🇧'},
-    {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
-    {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
-    {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},
-    {'id': 39, 'name': 'Sri Lanka', 'flag': '🇱🇰'},
-    {'id': 1,  'name': 'Pakistan', 'flag': '🇵🇰'},
-    {'id': 43, 'name': 'West Indies', 'flag': '🇻🇨'},
-    {'id': 37, 'name': 'Bangladesh', 'flag': '🇧🇩'},
-    {'id': 100,'name': 'Ireland', 'flag': '🇮🇪'},
-    {'id': 46, 'name': 'Afghanistan', 'flag': '🇦🇫'},
-    {'id': 41, 'name': 'Zimbabwe', 'flag': '🇿🇼'}
-]
-
 @app.route('/')
 def home():
     # Clear the team_id from session when returning to home
     session.pop('team_id', None)
-    return render_template('index.html', teams=TEAMS)
+    return render_template('index.html', teams=get_teams())
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -164,10 +167,42 @@ def predict():
             return render_template('error.html', message=f"No performance data available for {team_name}")
         
         # Calculate player ratings
-        rated_players = [calculate_player_rating(player) for player in performances.values()]
+        rated_players = []
+        for player_id, player_data in performances.items():
+            player_data['id'] = player_id
+            rating = calculate_player_rating(player_data)
+            rated_players.append(rating)
         
         # Predict best XI
         best_xi = predict_best_xi(performances)
+        
+        # Fetch player images for best XI
+        for player in best_xi['players']:
+            try:
+                player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player['id']}"
+                params = {"api_token": API_TOKEN}
+                response = requests.get(player_url, params=params)
+                if response.status_code == 200:
+                    player_data = response.json().get('data')
+                    if player_data:
+                        player['image_path'] = player_data.get('image_path')
+            except Exception as e:
+                print(f"Error fetching image for player {player['name']}: {str(e)}")
+                player['image_path'] = None
+        
+        # Fetch player images for bench strength
+        for player in best_xi['bench_strength']:
+            try:
+                player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player['id']}"
+                params = {"api_token": API_TOKEN}
+                response = requests.get(player_url, params=params)
+                if response.status_code == 200:
+                    player_data = response.json().get('data')
+                    if player_data:
+                        player['image_path'] = player_data.get('image_path')
+            except Exception as e:
+                print(f"Error fetching image for player {player['name']}: {str(e)}")
+                player['image_path'] = None
             
         # Calculate team stats
         team_stats = calculate_team_stats(performances)
@@ -318,6 +353,7 @@ def calculate_batting_stats(df):
     for _, player in df.iterrows():
         if player['batting']['innings'] > 0:
             stats.append({
+                'id': player['id'],  # Add player ID
                 'name': player['name'],
                 'matches': player['matches'],
                 'runs': player['batting']['runs'],
@@ -339,6 +375,7 @@ def calculate_bowling_stats(df):
             )
             
             stats.append({
+                'id': player['id'],  # Add player ID
                 'name': player['name'],
                 'matches': player['matches'],
                 'wickets': player['bowling']['wickets'],
@@ -362,6 +399,7 @@ def calculate_allrounder_stats(df):
             )
             
             stats.append({
+                'id': player['id'],  # Add player ID
                 'name': player['name'],
                 'matches': player['matches'],
                 # Batting stats
@@ -446,6 +484,92 @@ def calculate_team_stats(performances):
         stats['bowling']['bowling_average'] = 0
     
     return stats
+
+@app.route('/player/<int:player_id>')
+@login_required
+def player_profile(player_id):
+    try:
+        print(f"Fetching data for player ID: {player_id}")
+        
+        # Get player data from API
+        player_url = f"https://cricket.sportmonks.com/api/v2.0/players/{player_id}"
+        params = {
+            "api_token": API_TOKEN
+        }
+        
+        response = requests.get(player_url, params=params)
+        if response.status_code != 200:
+            return render_template('error.html', message=f"Could not fetch player data. Status code: {response.status_code}")
+            
+        player_data = response.json().get('data')
+        if not player_data:
+            return render_template('error.html', message="Player not found in API response")
+            
+        # Get recent performances
+        team_id = session.get('team_id')
+        if not team_id:
+            return render_template('error.html', message="No team selected")
+            
+        performances = get_recent_t20i_performances(int(team_id))
+        if not performances:
+            return render_template('error.html', message="Could not fetch recent performances")
+            
+        player_performance = next((p for p in performances.values() if p['id'] == player_id), None)
+        
+        # Get individual match performances
+        match_performances = get_player_match_performances(player_id, int(team_id))
+        
+        # Initialize career stats with zeros
+        career_stats = {
+            'batting': {
+                'matches': 0,
+                'innings': 0,
+                'runs': 0,
+                'average': 0,
+                'strike_rate': 0,
+                'highest': 0
+            },
+            'bowling': {
+                'matches': 0,
+                'innings': 0,
+                'wickets': 0,
+                'average': '∞',
+                'economy': 0,
+                'best': '0/0'
+            }
+        }
+        
+        # If we have recent performance data, use that for stats
+        if player_performance:
+            career_stats['batting'].update({
+                'matches': player_performance['matches'],
+                'innings': player_performance['batting']['innings'],
+                'runs': player_performance['batting']['runs'],
+                'average': player_performance['batting']['runs'] / player_performance['batting']['innings'] if player_performance['batting']['innings'] > 0 else 0,
+                'strike_rate': (player_performance['batting']['runs'] / player_performance['batting']['balls'] * 100) if player_performance['batting']['balls'] > 0 else 0,
+                'highest': player_performance['batting']['highest']
+            })
+            
+            career_stats['bowling'].update({
+                'matches': player_performance['matches'],
+                'innings': player_performance['bowling']['innings'],
+                'wickets': player_performance['bowling']['wickets'],
+                'average': '∞' if player_performance['bowling']['wickets'] == 0 else (
+                    player_performance['bowling']['runs'] / player_performance['bowling']['wickets']
+                ),
+                'economy': player_performance['bowling']['runs'] / player_performance['bowling']['overs'] if player_performance['bowling']['overs'] > 0 else 0,
+                'best': player_performance['bowling']['best']
+            })
+        
+        return render_template('player_profile.html',
+                             player=player_data,
+                             career_stats=career_stats,
+                             recent_performance=player_performance,
+                             match_performances=match_performances)
+                             
+    except Exception as e:
+        print(f"Error in player profile: {str(e)}")
+        return render_template('error.html', message=f"Error: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True)
