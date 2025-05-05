@@ -21,7 +21,7 @@ app = Flask(__name__)
 # Define teams data
 TEAMS = [
     {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
-    {'id': 38, 'name': 'England', 'flag': '🏴'},
+    {'id': 38, 'name': 'England', 'flag': '🇬🇧'},
     {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
     {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
     {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},

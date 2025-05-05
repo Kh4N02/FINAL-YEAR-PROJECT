@@ -370,8 +370,8 @@ def calculate_player_rating(player):
         'Iftikhar Ahmed': 'All-rounder',
         'Mohammad Nawaz': 'All-rounder',
         'Naseem Shah': 'Bowler',
-        'Mohammad Wasim Jr': 'Bowler'
-    }
+        'Mohammad Wasim Jr': 'Bowler' 
+    } 
     
     # Calculate ratings
     batting_rating = 0
