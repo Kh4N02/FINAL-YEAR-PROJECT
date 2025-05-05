@@ -221,13 +221,37 @@ body {
 
 .bench-strength .rating-summary {
     display: flex;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 80px;
 }
 
 .bench-strength .rating-summary .badge {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.6rem;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.bench-strength .player-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.bench-strength .stats-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.bench-strength .player-header h3 {
+    font-size: 1rem;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Add responsive adjustments for bench strength */
@@ -579,4 +603,39 @@ th[data-direction="desc"] .sort-icon {
 /* Add a subtle hover effect to the progress bar */
 .performance-analysis .progress:hover .progress-bar {
     filter: brightness(1.1);
+}
+
+/* Add these styles */
+.stats-toggle {
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.stats-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.stats-toggle .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.stats-toggle[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Update existing player-header styles */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.player-header:hover {
+    background: #e9ecef;
 }
