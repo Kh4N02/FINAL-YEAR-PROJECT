@@ -35,7 +35,13 @@
                             <td>{{ "%.2f"|format(stat.strike_rate) }}</td>
                             <td>{{ stat.wickets }}</td>
                             <td>{{ "%.2f"|format(stat.economy) }}</td>
-                            <td>{{ "%.2f"|format(stat.bowling_average) }}</td>
+                            <td>
+                                {% if stat.bowling_average == '∞' %}
+                                    ∞
+                                {% else %}
+                                    {{ "%.2f"|format(stat.bowling_average) }}
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="progress">
                                     <div class="progress-bar bg-success" 
@@ -111,7 +117,13 @@
                             <td>{{ stat.name }}</td>
                             <td>{{ stat.matches }}</td>
                             <td>{{ stat.wickets }}</td>
-                            <td>{{ "%.2f"|format(stat.economy) }}</td>
+                            <td>
+                                {% if stat.economy == '∞' %}
+                                    ∞
+                                {% else %}
+                                    {{ "%.2f"|format(stat.economy) }}
+                                {% endif %}
+                            </td>
                             <td>{{ stat.best }}</td>
                         </tr>
                         {% endfor %}
@@ -122,43 +134,190 @@
     </div>
 </div>
 
-<!-- Add a visual comparison section -->
+<!-- Replace the existing player comparison section -->
 <div class="card mt-4">
     <div class="card-header bg-info text-white">
-        <h2 class="h5 mb-0">Performance Comparison</h2>
+        <h2 class="h5 mb-0">Player Comparison</h2>
     </div>
     <div class="card-body">
-        <div class="row">
-            {% for stat in allrounder_stats[:3] %}
-            <div class="col-md-4">
-                <div class="player-comparison-card">
-                    <h3>{{ stat.name }}</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="label">Batting</span>
-                            <div class="progress">
-                                <div class="progress-bar bg-primary" 
-                                     style="width: {{ (stat.batting_average/50)*100 }}%">
-                                    {{ "%.1f"|format(stat.batting_average) }}
-                                </div>
-                            </div>
+        <div class="row mb-4">
+            <div class="col-md-5">
+                <select class="form-select" id="player1Select">
+                    <option value="">Select Player 1</option>
+                    {% for stat in allrounder_stats + batting_stats + bowling_stats %}
+                        <option value="{{ stat.name }}">{{ stat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 text-center">
+                <div class="vs-badge">VS</div>
+            </div>
+            <div class="col-md-5">
+                <select class="form-select" id="player2Select">
+                    <option value="">Select Player 2</option>
+                    {% for stat in allrounder_stats + batting_stats + bowling_stats %}
+                        <option value="{{ stat.name }}">{{ stat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div id="comparisonResults" class="comparison-container" style="display: none;">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="player-stats" id="player1Stats">
+                        <h3 class="player-name text-center mb-3"></h3>
+                        <div class="batting-stats">
+                            <h4>Batting</h4>
+                            <div class="stat-grid"></div>
                         </div>
-                        <div class="stat-item">
-                            <span class="label">Bowling</span>
-                            <div class="progress">
-                                <div class="progress-bar bg-success" 
-                                     style="width: {{ (stat.wickets/10)*100 }}%">
-                                    {{ stat.wickets }} wkts
-                                </div>
-                            </div>
+                        <div class="bowling-stats mt-3">
+                            <h4>Bowling</h4>
+                            <div class="stat-grid"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 text-center">
+                    <div class="comparison-divider"></div>
+                </div>
+                <div class="col-md-5">
+                    <div class="player-stats" id="player2Stats">
+                        <h3 class="player-name text-center mb-3"></h3>
+                        <div class="batting-stats">
+                            <h4>Batting</h4>
+                            <div class="stat-grid"></div>
+                        </div>
+                        <div class="bowling-stats mt-3">
+                            <h4>Bowling</h4>
+                            <div class="stat-grid"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
     </div>
 </div>
+
+<!-- Update the JavaScript for comparison -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const player1Select = document.getElementById('player1Select');
+    const player2Select = document.getElementById('player2Select');
+    const comparisonResults = document.getElementById('comparisonResults');
+    
+    function updateComparison() {
+        const player1Name = player1Select.value;
+        const player2Name = player2Select.value;
+        
+        if (!player1Name || !player2Name) {
+            comparisonResults.style.display = 'none';
+            return;
+        }
+        
+        fetch('{{ url_for("compare_players") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `player1=${encodeURIComponent(player1Name)}&player2=${encodeURIComponent(player2Name)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+            
+            displayComparison(data);
+            comparisonResults.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    function displayComparison(data) {
+        const players = ['player1', 'player2'];
+        
+        players.forEach(playerKey => {
+            const playerData = data[playerKey];
+            const statsContainer = document.getElementById(`${playerKey}Stats`);
+            
+            // Set player name
+            statsContainer.querySelector('.player-name').textContent = playerData.name;
+            
+            // Update batting stats
+            const battingGrid = statsContainer.querySelector('.batting-stats .stat-grid');
+            const battingStats = playerData.batting;
+            const battingAvg = battingStats.innings > 0 ? (battingStats.runs / battingStats.innings).toFixed(2) : '0.00';
+            const strikeRate = battingStats.balls > 0 ? ((battingStats.runs / battingStats.balls) * 100).toFixed(2) : '0.00';
+            
+            battingGrid.innerHTML = `
+                <div class="stat-item">
+                    <span class="label">Matches</span>
+                    <span class="value">${playerData.matches}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Runs</span>
+                    <span class="value">${battingStats.runs}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Average</span>
+                    <span class="value">${battingAvg}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Strike Rate</span>
+                    <span class="value">${strikeRate}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Fours</span>
+                    <span class="value">${battingStats.fours}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Sixes</span>
+                    <span class="value">${battingStats.sixes}</span>
+                </div>
+            `;
+            
+            // Update bowling stats
+            const bowlingGrid = statsContainer.querySelector('.bowling-stats .stat-grid');
+            const bowlingStats = playerData.bowling;
+            const economy = bowlingStats.overs > 0 ? (bowlingStats.runs / bowlingStats.overs).toFixed(2) : '0.00';
+            const bowlingAvg = bowlingStats.wickets > 0 ? (bowlingStats.runs / bowlingStats.wickets).toFixed(2) : '-';
+            
+            bowlingGrid.innerHTML = `
+                <div class="stat-item">
+                    <span class="label">Wickets</span>
+                    <span class="value">${bowlingStats.wickets}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Economy</span>
+                    <span class="value">${economy}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Average</span>
+                    <span class="value">${bowlingAvg}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Best</span>
+                    <span class="value">${bowlingStats.best}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Overs</span>
+                    <span class="value">${bowlingStats.overs}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Maidens</span>
+                    <span class="value">${bowlingStats.maidens || 0}</span>
+                </div>
+            `;
+        });
+    }
+    
+    player1Select.addEventListener('change', updateComparison);
+    player2Select.addEventListener('change', updateComparison);
+});
+</script>
 
 <!-- Add sorting JavaScript -->
 <script>
@@ -190,6 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 rows.sort((a, b) => {
                     const aValue = a.children[Array.from(header.parentNode.children).indexOf(header)].textContent;
                     const bValue = b.children[Array.from(header.parentNode.children).indexOf(header)].textContent;
+                    
+                    // Handle infinite symbol
+                    if (aValue === '∞') return newDirection === 'asc' ? 1 : -1;
+                    if (bValue === '∞') return newDirection === 'asc' ? -1 : 1;
                     
                     // Handle numeric values
                     const aNum = parseFloat(aValue);

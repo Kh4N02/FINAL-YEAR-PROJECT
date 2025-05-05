@@ -324,3 +324,88 @@ th[data-direction="desc"] .sort-icon {
     font-weight: 500;
     color: #fff;
 }
+
+/* Player Comparison Styles */
+.vs-badge {
+    background: #dc3545;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.comparison-container {
+    margin-top: 20px;
+}
+
+.player-stats {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.player-stats h3 {
+    color: #007bff;
+    font-size: 1.2rem;
+}
+
+.player-stats h4 {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.stat-item {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-item .label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.stat-item .value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.comparison-divider {
+    width: 2px;
+    background: #dee2e6;
+    height: 100%;
+    margin: 0 auto;
+}
+
+/* Highlight better stats */
+.stat-item.better {
+    background: #e8f5e9;
+    border: 1px solid #4caf50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .comparison-divider {
+        width: 100%;
+        height: 2px;
+        margin: 20px 0;
+    }
+    
+    .vs-badge {
+        margin: 20px 0;
+    }
+}

@@ -185,12 +185,7 @@ def predict():
 @app.route('/performance')
 @login_required
 def performance():
-    # First try to get team_id from URL
-    team_id = request.args.get('team_id')
-    
-    # If not in URL, try to get from session
-    if not team_id:
-        team_id = session.get('team_id')
+    team_id = request.args.get('team_id') or session.get('team_id')
     
     if not team_id:
         return redirect(url_for('home'))
@@ -211,6 +206,18 @@ def performance():
         bowling_stats = calculate_bowling_stats(df)
         allrounder_stats = calculate_allrounder_stats(df)
         
+        # Prepare all players data for comparison dropdowns
+        all_players = []
+        for player_id, player_data in performances.items():
+            player_stats = {
+                'id': player_id,
+                'name': player_data['name'],
+                'batting': player_data['batting'],
+                'bowling': player_data['bowling'],
+                'matches': player_data['matches']
+            }
+            all_players.append(player_stats)
+        
         team_name = get_team_name(int(team_id))
         if not team_name:
             return render_template('error.html', 
@@ -220,15 +227,55 @@ def performance():
                              batting_stats=batting_stats,
                              bowling_stats=bowling_stats,
                              allrounder_stats=allrounder_stats,
+                             all_players=all_players,
                              team_name=team_name)
                              
-    except ValueError as e:
-        return render_template('error.html', 
-                             message=f"Invalid team ID: {team_id}")
     except Exception as e:
         print(f"Error processing team {team_id}: {str(e)}")
         return render_template('error.html', 
                              message=f"An error occurred while processing the team data: {str(e)}")
+
+@app.route('/compare_players', methods=['POST'])
+@login_required
+def compare_players():
+    try:
+        player1_name = request.form.get('player1')
+        player2_name = request.form.get('player2')
+        team_id = session.get('team_id')
+        
+        if not team_id:
+            return jsonify({'error': 'No team selected'})
+            
+        performances = get_recent_t20i_performances(int(team_id))
+        if not performances:
+            return jsonify({'error': 'No performance data available'})
+            
+        # Find players by name instead of ID
+        player1_data = next((p for p in performances.values() if p['name'] == player1_name), None)
+        player2_data = next((p for p in performances.values() if p['name'] == player2_name), None)
+        
+        if not player1_data or not player2_data:
+            return jsonify({'error': 'Player data not found'})
+            
+        comparison = {
+            'player1': {
+                'name': player1_data['name'],
+                'batting': player1_data['batting'],
+                'bowling': player1_data['bowling'],
+                'matches': player1_data['matches']
+            },
+            'player2': {
+                'name': player2_data['name'],
+                'batting': player2_data['batting'],
+                'bowling': player2_data['bowling'],
+                'matches': player2_data['matches']
+            }
+        }
+        
+        return jsonify(comparison)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 def analyze_performance_trends(performances):
     """Analyze recent performance trends"""
@@ -286,12 +333,18 @@ def calculate_bowling_stats(df):
     stats = []
     for _, player in df.iterrows():
         if player['bowling']['innings'] > 0:
+            # Calculate bowling average, use '∞' for infinite
+            bowling_avg = '∞' if player['bowling']['wickets'] == 0 else (
+                player['bowling']['runs'] / player['bowling']['wickets']
+            )
+            
             stats.append({
                 'name': player['name'],
                 'matches': player['matches'],
                 'wickets': player['bowling']['wickets'],
                 'economy': player['bowling']['runs'] / player['bowling']['overs'] 
                           if player['bowling']['overs'] > 0 else 0,
+                'bowling_average': bowling_avg,
                 'best': player['bowling']['best']
             })
     return sorted(stats, key=lambda x: x['wickets'], reverse=True)
@@ -303,6 +356,11 @@ def calculate_allrounder_stats(df):
         # Check if player has both batting and bowling performances
         if (player['batting']['innings'] > 0 and 
             player['bowling']['innings'] > 0):
+            # Calculate bowling average, use '∞' for infinite
+            bowling_avg = '∞' if player['bowling']['wickets'] == 0 else (
+                player['bowling']['runs'] / player['bowling']['wickets']
+            )
+            
             stats.append({
                 'name': player['name'],
                 'matches': player['matches'],
@@ -315,8 +373,7 @@ def calculate_allrounder_stats(df):
                 'wickets': player['bowling']['wickets'],
                 'economy': player['bowling']['runs'] / player['bowling']['overs'] 
                           if player['bowling']['overs'] > 0 else 0,
-                'bowling_average': (player['bowling']['runs'] / player['bowling']['wickets'] 
-                                  if player['bowling']['wickets'] > 0 else float('inf')),
+                'bowling_average': bowling_avg,
                 # Combined rating
                 'all_round_rating': calculate_all_round_rating(player)
             })
