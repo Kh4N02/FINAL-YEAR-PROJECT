@@ -177,8 +177,8 @@ def predict():
             rated_players.append(rating)
         
         # Predict best XI
-        best_xi = predict_best_xi(performances)
-        
+            best_xi = predict_best_xi(performances)
+            
         # Fetch player images for best XI
         for player in best_xi['players']:
             try:
@@ -217,7 +217,7 @@ def predict():
         
         # Calculate team stats
         team_stats = calculate_team_stats(performances)
-        
+            
         return render_template('predict.html', 
                              team_name=team_name,
                              best_xi=best_xi,

@@ -156,8 +156,18 @@
             <div class="col-md-5">
                 <select class="form-select" id="player1Select">
                     <option value="">Select Player 1</option>
-                    {% for stat in allrounder_stats + batting_stats + bowling_stats %}
+                    {% for stat in allrounder_stats %}
                         <option value="{{ stat.name }}">{{ stat.name }}</option>
+                    {% endfor %}
+                    {% for stat in batting_stats %}
+                        {% if not stat.name in allrounder_stats|map(attribute='name')|list %}
+                            <option value="{{ stat.name }}">{{ stat.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                    {% for stat in bowling_stats %}
+                        {% if not stat.name in allrounder_stats|map(attribute='name')|list and not stat.name in batting_stats|map(attribute='name')|list %}
+                            <option value="{{ stat.name }}">{{ stat.name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
@@ -167,8 +177,18 @@
             <div class="col-md-5">
                 <select class="form-select" id="player2Select">
                     <option value="">Select Player 2</option>
-                    {% for stat in allrounder_stats + batting_stats + bowling_stats %}
+                    {% for stat in allrounder_stats %}
                         <option value="{{ stat.name }}">{{ stat.name }}</option>
+                    {% endfor %}
+                    {% for stat in batting_stats %}
+                        {% if not stat.name in allrounder_stats|map(attribute='name')|list %}
+                            <option value="{{ stat.name }}">{{ stat.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                    {% for stat in bowling_stats %}
+                        {% if not stat.name in allrounder_stats|map(attribute='name')|list and not stat.name in batting_stats|map(attribute='name')|list %}
+                            <option value="{{ stat.name }}">{{ stat.name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
@@ -264,6 +284,100 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // Player Comparison JavaScript
+    const player1Select = document.getElementById('player1Select');
+    const player2Select = document.getElementById('player2Select');
+    const comparisonResults = document.getElementById('comparisonResults');
+    const player1Stats = document.getElementById('player1Stats');
+    const player2Stats = document.getElementById('player2Stats');
+
+    function updateComparison() {
+        const player1 = player1Select.value;
+        const player2 = player2Select.value;
+
+        if (player1 && player2) {
+            // Show comparison container
+            comparisonResults.style.display = 'block';
+
+            // Fetch comparison data
+            fetch('/compare_players', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                // Update player 1 stats
+                updatePlayerStats(player1Stats, data.player1);
+                // Update player 2 stats
+                updatePlayerStats(player2Stats, data.player2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            comparisonResults.style.display = 'none';
+        }
+    }
+
+    function updatePlayerStats(container, playerData) {
+        // Update player name
+        container.querySelector('.player-name').textContent = playerData.name;
+
+        // Update batting stats
+        const battingGrid = container.querySelector('.batting-stats .stat-grid');
+        battingGrid.innerHTML = `
+            <div class="stat-item">
+                <span class="label">Matches</span>
+                <span class="value">${playerData.matches}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Runs</span>
+                <span class="value">${playerData.batting.runs}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Average</span>
+                <span class="value">${(playerData.batting.runs / playerData.batting.innings).toFixed(2)}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Strike Rate</span>
+                <span class="value">${((playerData.batting.runs / playerData.batting.balls) * 100).toFixed(2)}</span>
+            </div>
+        `;
+
+        // Update bowling stats
+        const bowlingGrid = container.querySelector('.bowling-stats .stat-grid');
+        bowlingGrid.innerHTML = `
+            <div class="stat-item">
+                <span class="label">Matches</span>
+                <span class="value">${playerData.matches}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Wickets</span>
+                <span class="value">${playerData.bowling.wickets}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Economy</span>
+                <span class="value">${(playerData.bowling.runs / playerData.bowling.overs).toFixed(2)}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Best</span>
+                <span class="value">${playerData.bowling.best}</span>
+            </div>
+        `;
+    }
+
+    // Add event listeners for select changes
+    player1Select.addEventListener('change', updateComparison);
+    player2Select.addEventListener('change', updateComparison);
 });
 </script>
 {% endblock %}
