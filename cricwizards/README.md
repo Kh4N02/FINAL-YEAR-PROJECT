@@ -47,7 +47,7 @@ pip install -r requirements.txt
 python websites/app.py
 ```
 
-### Option 2: Using Virtual Environment (Recommended for Production)
+### Option 2: Using Virtual Environment
 1. Clone the repository:
 ```bash
 git clone https://github.com/Kh4N02/FINAL-YEAR-PROJECT.git

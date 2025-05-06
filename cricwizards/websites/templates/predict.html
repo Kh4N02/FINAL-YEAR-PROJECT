@@ -13,7 +13,7 @@
                 </div>
                 <div class="card-body">
                     {% for player in best_xi.players %}
-                    <div class="player-card">
+            <div class="player-card">
                         <div class="player-header">
                             <div class="d-flex align-items-center">
                                 {% if player.image_path %}
@@ -95,8 +95,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
+            </div>
+            {% endfor %}
                 </div>
             </div>
             
@@ -109,7 +109,7 @@
                     <div class="row">
                         {% for player in best_xi.bench_strength %}
                         <div class="col-md-4 mb-3">
-                            <div class="player-card">
+            <div class="player-card">
                                 <div class="player-header">
                                     <div class="d-flex align-items-center">
                                         {% if player.image_path %}
@@ -194,8 +194,8 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        {% endfor %}
+            </div>
+            {% endfor %}
                     </div>
                 </div>
             </div>
@@ -206,7 +206,7 @@
         </div>
     {% else %}
         <div class="alert alert-warning">
-            <p>No team data available</p>
+        <p>No team data available</p>
         </div>
     {% endif %}
 </div>
