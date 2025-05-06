@@ -47,7 +47,7 @@ pip install -r requirements.txt
 python websites/app.py
 ```
 
-### Option 2: Using Virtual Environment
+### Option 2: Using Virtual Environment (Recommended for Production)
 1. Clone the repository:
 ```bash
 git clone https://github.com/Kh4N02/FINAL-YEAR-PROJECT.git
@@ -127,7 +127,7 @@ cricwizards/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the [MIT License](LICENSE) – see the LICENSE file for details.
 
 ## Acknowledgments
 
