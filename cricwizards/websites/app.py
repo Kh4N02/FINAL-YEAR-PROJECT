@@ -34,20 +34,20 @@ with app.app_context():
     db.create_all()
 
 def get_teams():
-    """Get the list of teams with their flags"""
+    """Get the list of teams with their flags (all as image paths)"""
     return [
-        {'id': 36, 'name': 'Australia', 'flag': '🇦🇺'},
+        {'id': 36, 'name': 'Australia', 'flag': url_for('static', filename='images/flags/australia_flag.png')},
         {'id': 38, 'name': 'England', 'flag': url_for('static', filename='images/flags/england_flag.png')},
-        {'id': 40, 'name': 'South Africa', 'flag': '🇿🇦'},
-        {'id': 10, 'name': 'India', 'flag': '🇮🇳'},
-        {'id': 42, 'name': 'New Zealand', 'flag': '🇳🇿'},
-        {'id': 39, 'name': 'Sri Lanka', 'flag': '🇱🇰'},
-        {'id': 1,  'name': 'Pakistan', 'flag': '🇵🇰'},
-        {'id': 43, 'name': 'West Indies', 'flag': '🇻🇨'},
-        {'id': 37, 'name': 'Bangladesh', 'flag': '🇧🇩'},
-        {'id': 100,'name': 'Ireland', 'flag': '🇮🇪'},
-        {'id': 46, 'name': 'Afghanistan', 'flag': '🇦🇫'},
-        {'id': 41, 'name': 'Zimbabwe', 'flag': '🇿🇼'}
+        {'id': 40, 'name': 'South Africa', 'flag': url_for('static', filename='images/flags/southafrica_flag.png')},
+        {'id': 10, 'name': 'India', 'flag': url_for('static', filename='images/flags/india_flag.png')},
+        {'id': 42, 'name': 'New Zealand', 'flag': url_for('static', filename='images/flags/newzealand_flag.png')},
+        {'id': 39, 'name': 'Sri Lanka', 'flag': url_for('static', filename='images/flags/srilanka_flag.png')},
+        {'id': 1,  'name': 'Pakistan', 'flag': url_for('static', filename='images/flags/pakistan_flag.png')},
+        {'id': 43, 'name': 'West Indies', 'flag': url_for('static', filename='images/flags/westindies_flag.png')},
+        {'id': 37, 'name': 'Bangladesh', 'flag': url_for('static', filename='images/flags/bangladesh_flag.png')},
+        {'id': 100,'name': 'Ireland', 'flag': url_for('static', filename='images/flags/ireland_flag.png')},
+        {'id': 46, 'name': 'Afghanistan', 'flag': url_for('static', filename='images/flags/afghanistan_flag.png')},
+        {'id': 41, 'name': 'Zimbabwe', 'flag': url_for('static', filename='images/flags/zimbabwe_flag.png')}
     ]
 
 # Authentication decorator
